@@ -839,7 +839,6 @@
                 if (!existingIcs.includes(ic)) {
                     const row = tbody.insertRow();
                     row.dataset.ic = ic;
-                    // FIX: Removed inline style="display:none;" from the Ta Limit input
                     row.innerHTML = `
                         <td data-label="Component">${ic}</td>
                         <td data-label="Spec Type">
@@ -871,23 +870,35 @@
             const select = event.target;
             const row = select.closest('tr');
             const type = select.value;
+
+            // Get all the input elements in the row
             const tjInput = row.querySelector('.spec-tj');
             const rjcInput = row.querySelector('.spec-rjc');
             const pdInput = row.querySelector('.spec-pd');
             const taInput = row.querySelector('.spec-ta');
 
-            const tjCell = tjInput.closest('td');
-            const rjcCell = rjcInput.closest('td');
-            const pdCell = pdInput.closest('td');
-            const taCell = taInput.closest('td');
+            // Instead of hiding the <td>, hide the <input> using 'visibility' 
+            // to preserve the table's column layout and prevent collapsing.
+            
+            // Set visibility for all inputs based on the selected type
+            tjInput.style.visibility = (type === 'Tc' || type === 'Tj') ? 'visible' : 'hidden';
+            rjcInput.style.visibility = (type === 'Tc') ? 'visible' : 'hidden';
+            pdInput.style.visibility = (type === 'Tc') ? 'visible' : 'hidden';
+            taInput.style.visibility = (type === 'Ta') ? 'visible' : 'hidden';
 
-            const displayStyle = (window.innerWidth < 768) ? 'block' : 'table-cell';
+            // Also set the disabled property for data integrity
+            tjInput.disabled = !(type === 'Tc' || type === 'Tj');
+            rjcInput.disabled = !(type === 'Tc');
+            pdInput.disabled = !(type === 'Tc');
+            taInput.disabled = !(type === 'Ta');
 
-            tjCell.style.display = (type === 'Tc' || type === 'Tj') ? displayStyle : 'none';
-            rjcCell.style.display = (type === 'Tc') ? displayStyle : 'none';
-            pdCell.style.display = (type === 'Tc') ? displayStyle : 'none';
-            taCell.style.display = (type === 'Ta') ? displayStyle : 'none';
+            // Clear the values of inputs that are now hidden
+            if (tjInput.style.visibility === 'hidden') tjInput.value = '';
+            if (rjcInput.style.visibility === 'hidden') rjcInput.value = '';
+            if (pdInput.style.visibility === 'hidden') pdInput.value = '';
+            if (taInput.style.visibility === 'hidden') taInput.value = '';
         }
+
 
         function addDeltaPair() {
             const container = document.getElementById('cobra-delta-pairs-container');
