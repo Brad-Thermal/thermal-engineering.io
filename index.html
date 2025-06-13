@@ -38,8 +38,8 @@
         #message-box.error { background-color: var(--accent-red); }
         #message-box.info { background-color: var(--accent-blue); }
         
-        .st-tabs-container { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
-        .st-tab { padding: 0.75rem 0.25rem; margin-right: 1.5rem; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+        .st-tabs-container { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; overflow-x: auto; }
+        .st-tab { padding: 0.75rem 0.25rem; margin-right: 1.5rem; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; white-space: nowrap;}
         .st-tab.active { color: var(--accent-blue); border-color: var(--accent-blue); font-weight: 500;}
         .st-tab-content { display: none; animation: fadeIn 0.5s; }
         .st-tab-content.active { display: block; }
@@ -71,6 +71,45 @@
         .multiselect-container label { display: block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; transition: background-color 0.2s;}
         .multiselect-container label:hover { background-color: var(--bg-lighter); }
         .tool-selector.active { background-color: var(--accent-blue); color: white; }
+
+        /* --- RWD Change: Responsive Table Styles --- */
+        /* On screens smaller than 768px (Tailwind's 'md' breakpoint) */
+        @media (max-width: 767px) {
+            .data-editor-table {
+                min-width: 100%; /* Remove fixed min-width on mobile */
+            }
+            .data-editor-table thead {
+                display: none; /* Hide table headers, we'll use data-labels instead */
+            }
+            .data-editor-table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid var(--border-color);
+                border-radius: 0.5rem;
+                overflow: hidden;
+            }
+            .data-editor-table td {
+                display: block;
+                text-align: right; /* Align value to the right */
+                position: relative;
+                padding-left: 50%; /* Make space for the label */
+                border: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .data-editor-table td:last-child {
+                 border-bottom: none;
+            }
+            .data-editor-table td::before {
+                content: attr(data-label); /* Use data-label for the header text */
+                position: absolute;
+                left: 0.75rem;
+                width: calc(50% - 1.5rem);
+                text-align: left;
+                font-weight: bold;
+                white-space: nowrap;
+                color: var(--text-secondary);
+            }
+        }
     </style>
 </head>
 <body class="text-slate-200">
@@ -85,7 +124,7 @@
     <div id="app-wrapper" class="w-full h-screen hidden">
         
         <div id="auth-view" class="view flex items-center justify-center h-full" style="background-color: var(--bg-dark);">
-            <div class="w-full max-w-sm mx-auto">
+            <div class="w-full max-w-sm mx-auto p-4">
                 <div class="bg-transparent p-8">
                     <div class="text-center mb-8">
                         <h1 class="text-4xl font-bold text-white">Sercomm Tool Suite</h1>
@@ -110,7 +149,7 @@
         </div>
 
         <div id="register-view" class="view hidden flex items-center justify-center h-full" style="background-color: var(--bg-dark);">
-            <div class="w-full max-w-sm mx-auto">
+             <div class="w-full max-w-sm mx-auto p-4">
                 <div class="bg-transparent p-8">
                     <div class="text-center mb-8">
                         <h1 class="text-3xl font-bold text-white">Create New Account</h1>
@@ -134,8 +173,8 @@
             </div>
         </div>
 
-        <div id="main-app-view" class="view hidden h-screen flex">
-            <aside class="w-60 p-6 flex flex-col" style="background-color: #000;">
+        <div id="main-app-view" class="view hidden h-screen lg:flex relative">
+            <aside id="main-sidebar" class="w-64 p-6 flex flex-col fixed lg:relative inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" style="background-color: #000;">
                 <h2 class="text-lg font-bold text-white mb-10">
                     <div>Sercomm</div>
                     <div>Thermal Engineering</div>
@@ -156,19 +195,28 @@
                     <button id="logout-button" class="w-full mt-2 bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Logout</button>
                 </div>
             </aside>
+            <div id="sidebar-overlay" class="hidden lg:hidden fixed inset-0 bg-black/50 z-20"></div>
 
-            <main class="flex-1 p-10 overflow-y-auto" style="background-color: var(--bg-dark);">
+            <main class="flex-1 w-full lg:w-auto p-4 md:p-6 lg:p-10 overflow-y-auto" style="background-color: var(--bg-dark);">
+                <header class="lg:hidden flex items-center justify-between mb-6">
+                    <button id="hamburger-menu-button" class="p-2 rounded-md hover:bg-white/10">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h1 id="mobile-tool-title" class="text-xl font-bold">Cobra</h1>
+                    <div></div>
+                </header>
+                
                 <div id="cobra-ui" class="tool-ui hidden"></div>
                 <div id="viper-ui" class="tool-ui"></div>
             </main>
         </div>
 
-        <div id="admin-panel-view" class="view hidden p-10" style="background-color: var(--bg-dark);">
+        <div id="admin-panel-view" class="view hidden p-4 md:p-10" style="background-color: var(--bg-dark);">
             <header class="p-4 mb-6 flex justify-between items-center">
-                <h1 class="text-2xl font-bold">Admin Panel</h1>
-                <button id="back-to-app-button" class="bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Back to Main System</button>
+                <h1 class="text-xl md:text-2xl font-bold">Admin Panel</h1>
+                <button id="back-to-app-button" class="bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Back to App</button>
             </header>
-            <main class="bg-[var(--bg-light)] p-8 rounded-xl shadow-lg">
+            <main class="bg-[var(--bg-light)] p-4 md:p-8 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold mb-6">User Account Management</h2>
                 <div class="overflow-x-auto"><table class="w-full"><thead class="bg-black/20"><tr><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Email</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Role</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Status</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Actions</th></tr></thead><tbody id="user-list-body" class="divide-y divide-[var(--border-color)]"></tbody></table></div>
             </main>
@@ -180,7 +228,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <script>
-        // --- App Logic ---
+        // --- App Logic (Firebase etc. remains the same) ---
         let currentUserData = null;
         let auth, db;
         const loader = document.getElementById('loader');
@@ -240,6 +288,8 @@
                 }
             });
             setupAuthEventListeners();
+            // RWD Change: Setup listeners for the new mobile navigation
+            setupMobileNavEventListeners(); 
         }
 
         async function checkUserStatusAndData(user) {
@@ -305,6 +355,30 @@
             document.getElementById('back-to-app-button').addEventListener('click', () => showView('main'));
         }
 
+        // RWD Change: New function to handle mobile navigation (hamburger menu)
+        function setupMobileNavEventListeners() {
+            const hamburgerBtn = document.getElementById('hamburger-menu-button');
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            const toggleSidebar = () => {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            };
+
+            hamburgerBtn.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            // Also close sidebar when a tool is selected on mobile
+            document.querySelectorAll('#main-sidebar .tool-selector').forEach(selector => {
+                selector.addEventListener('click', () => {
+                    if (window.innerWidth < 1024) { // 1024px is Tailwind's 'lg' breakpoint
+                        toggleSidebar();
+                    }
+                });
+            });
+        }
+
         let unsubscribeUserList; 
         function listenForUserUpdates() {
             if (unsubscribeUserList) unsubscribeUserList();
@@ -338,6 +412,10 @@
         function initializeSercommSuite(user) {
             renderViperUI();
             renderCobraUI();
+            
+            // RWD Change: Added logic to update the mobile header title
+            const mobileToolTitle = document.getElementById('mobile-tool-title');
+            
             document.querySelectorAll('.tool-selector').forEach(selector => {
                 selector.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -346,72 +424,78 @@
                     document.querySelectorAll('.tool-ui').forEach(ui => ui.classList.add('hidden'));
                     const toolId = selector.id.replace('tool-', '') + '-ui';
                     document.getElementById(toolId).classList.remove('hidden');
+
+                    // RWD Change: Update title
+                    const toolName = selector.textContent.trim();
+                    mobileToolTitle.textContent = toolName;
                 });
             });
             document.getElementById('tool-cobra').click(); 
         }
         
         function renderViperUI() {
-             const viperUI = document.getElementById('viper-ui');
-             const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
-             const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
-             viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-8">
-                                     <div class="mr-4"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
-                                     <div><h1 class="text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
-                                 </div>
-                                 <div id="viper-tabs" class="st-tabs-container">
-                                     <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
-                                     <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
-                                     <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
-                                 </div>
-                                 <div id="nat-conv-content" class="st-tab-content active">
-                                     <h2 class="text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
-                                     <div class="grid md:grid-cols-2 gap-8">
-                                         <div class="space-y-6">
-                                             <h3 class="text-xl font-semibold">Input Parameters</h3>
-                                             <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
-                                             <div>
-                                                 <label class="${labelClasses}">Product Dimensions (mm)</label>
-                                                 <div class="grid grid-cols-3 gap-4">
-                                                     <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
-                                                     <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
-                                                     <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
-                                                 </div>
-                                             </div>
-                                             <div class="grid grid-cols-2 gap-4">
-                                                 <div>
-                                                     <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
-                                                     <input type="number" id="nc_ta" value="25" class="${inputClasses}">
-                                                 </div>
-                                                 <div>
-                                                      <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
-                                                      <input type="number" id="nc_ts" value="50" class="${inputClasses}">
-                                                 </div>
-                                             </div>
-                                         </div>
-                                         <div class="bg-[var(--bg-light)] p-6 rounded-lg">
-                                             <h3 class="text-xl font-semibold mb-4">Evaluation Result</h3>
-                                             <div id="nc-results" class="space-y-4"></div>
-                                         </div>
-                                     </div>
-                                 </div>
-                                 <div id="force-conv-content" class="st-tab-content">
-                                     <h2 class="text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
-                                     <div class="grid md:grid-cols-2 gap-8">
-                                         <div class="space-y-6"><h3 class="text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
-                                         <div class="bg-[var(--bg-light)] p-6 rounded-lg"><h3 class="text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
-                                     </div>
-                                 </div>
-                                 <div id="solar-rad-content" class="st-tab-content">
-                                     <h2 class="text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
-                                     <div class="grid md:grid-cols-2 gap-8">
-                                         <div class="space-y-6"><h3 class="text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
-                                         <div class="bg-[var(--bg-light)] p-6 rounded-lg"><h3 class="text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
-                                     </div>
-                                 </div>`;
-             setupViperEventListeners();
+            const viperUI = document.getElementById('viper-ui');
+            const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
+            const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
+            // RWD Change: Changed p-x classes to be responsive
+            viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                                    <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
+                                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
+                                </div>
+                                <div id="viper-tabs" class="st-tabs-container">
+                                    <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
+                                    <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
+                                    <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
+                                </div>
+                                <div id="nat-conv-content" class="st-tab-content active">
+                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
+                                    <div class="grid md:grid-cols-2 gap-8">
+                                        <div class="space-y-6">
+                                            <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
+                                            <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
+                                            <div>
+                                                <label class="${labelClasses}">Product Dimensions (mm)</label>
+                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                    <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
+                                                    <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
+                                                    <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
+                                                    <input type="number" id="nc_ta" value="25" class="${inputClasses}">
+                                                </div>
+                                                <div>
+                                                     <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
+                                                     <input type="number" id="nc_ts" value="50" class="${inputClasses}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
+                                            <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
+                                            <div id="nc-results" class="space-y-4"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="force-conv-content" class="st-tab-content">
+                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
+                                    <div class="grid md:grid-cols-2 gap-8">
+                                        <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
+                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
+                                    </div>
+                                </div>
+                                <div id="solar-rad-content" class="st-tab-content">
+                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
+                                    <div class="grid md:grid-cols-2 gap-8">
+                                        <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
+                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
+                                    </div>
+                                </div>`;
+            setupViperEventListeners();
         }
         
+        // --- All the calculateAndDisplay functions remain the same ---
         function setupViperEventListeners() {
             const tabs = document.querySelectorAll('#viper-tabs .st-tab');
             const contents = document.querySelectorAll('#viper-ui .st-tab-content');
@@ -482,14 +566,14 @@
             const secondaryBtnClasses = "w-full text-white font-bold py-2 px-4 rounded-lg text-sm transition bg-[var(--accent-red)] hover:bg-red-500";
             
             cobraUI.innerHTML = `
-                <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-8">
-                    <div class="mr-4"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 95 C 20 95, 10 75, 25 60 C 35 50, 65 50, 75 60 C 90 75, 80 95, 60 95 L 40 95 Z" fill="#2C7873"/><path d="M50 70 C 25 70, 25 40, 50 20 C 75 40, 75 70, 50 70 Z" fill="#4A938E" stroke="#FFFFFF" stroke-width="2"/><path d="M50 20 C 40 30, 40 50, 50 60 C 60 50, 60 30, 50 20" fill="#1E1E1E"/><circle cx="46" cy="45" r="4" fill="red"/><circle cx="54" cy="45" r="4" fill="red"/><path d="M48 62 L52 62 L50 70 Z" fill="#FFD700"/></svg></div>
-                    <div><h1 class="text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Transformation & Analysis</p></div>
+                <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                    <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 95 C 20 95, 10 75, 25 60 C 35 50, 65 50, 75 60 C 90 75, 80 95, 60 95 L 40 95 Z" fill="#2C7873"/><path d="M50 70 C 25 70, 25 40, 50 20 C 75 40, 75 70, 50 70 Z" fill="#4A938E" stroke="#FFFFFF" stroke-width="2"/><path d="M50 20 C 40 30, 40 50, 50 60 C 60 50, 60 30, 50 20" fill="#1E1E1E"/><circle cx="46" cy="45" r="4" fill="red"/><circle cx="54" cy="45" r="4" fill="red"/><path d="M48 62 L52 62 L50 70 Z" fill="#FFD700"/></svg></div>
+                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Transformation & Analysis</p></div>
                 </div>
                 <div class="space-y-12">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        <div class="space-y-8">
-                            <h3 class="text-xl font-semibold">1. Upload Excel File</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                        <div class="space-y-6 md:space-y-8">
+                            <h3 class="text-lg md:text-xl font-semibold">1. Upload Excel File</h3>
                             <div class="flex gap-4">
                                 <label for="cobra-file-uploader" class="flex-grow cursor-pointer ${primaryBtnClasses} text-center">Select File</label>
                                 <input type="file" id="cobra-file-uploader" class="hidden" accept=".xlsx, .xls">
@@ -498,42 +582,42 @@
                             <p id="cobra-file-name" class="text-sm text-slate-400 mt-3 truncate"></p>
                         </div>
                         <div id="cobra-analysis-setup" class="hidden space-y-6">
-                             <h3 class="text-xl font-semibold">2. Analysis Parameters</h3>
-                             <div id="cobra-selection-tabs" class="st-tabs-container">
-                                 <button data-tab="series" class="st-tab active">Configurations</button>
-                                 <button data-tab="ics" class="st-tab">Key ICs</button>
-                                 <button data-tab="delta" class="st-tab">ΔT Comparison</button>
-                             </div>
-                             <div id="cobra-series-content" class="st-tab-content active"></div>
-                             <div id="cobra-ics-content" class="st-tab-content"></div>
-                             <div id="cobra-delta-content" class="st-tab-content"></div>
+                            <h3 class="text-lg md:text-xl font-semibold">2. Analysis Parameters</h3>
+                            <div id="cobra-selection-tabs" class="st-tabs-container">
+                                <button data-tab="series" class="st-tab active">Configurations</button>
+                                <button data-tab="ics" class="st-tab">Key ICs</button>
+                                <button data-tab="delta" class="st-tab">ΔT Comparison</button>
+                            </div>
+                            <div id="cobra-series-content" class="st-tab-content active"></div>
+                            <div id="cobra-ics-content" class="st-tab-content"></div>
+                            <div id="cobra-delta-content" class="st-tab-content"></div>
                         </div>
                     </div>
                     
                     <div id="cobra-specs-column" class="hidden space-y-6">
-                         <h3 class="text-xl font-semibold">3. Key IC Specification Input</h3>
-                         <div class="bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg p-1">
-                             <div id="cobra-spec-editor-container" class="max-h-[30rem] overflow-y-auto">
-                                 <div class="overflow-x-auto"></div>
-                             </div>
-                         </div>
+                        <h3 class="text-lg md:text-xl font-semibold">3. Key IC Specification Input</h3>
+                        <div class="bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg p-1">
+                            <div id="cobra-spec-editor-container" class="max-h-[30rem] overflow-y-auto">
+                                <div></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="cobra-run-analysis-container" class="hidden border-t border-[var(--border-color)] my-10 pt-8">
-                     <button id="cobra-run-analysis" class="w-full max-w-xs mx-auto block text-white font-bold py-3 px-4 rounded-lg text-base transition bg-[var(--accent-green)] hover:bg-green-600">🚀 Analyze Selected Data</button>
+                    <button id="cobra-run-analysis" class="w-full max-w-xs mx-auto block text-white font-bold py-3 px-4 rounded-lg text-base transition bg-[var(--accent-green)] hover:bg-green-600">🚀 Analyze Selected Data</button>
                 </div>
 
                 <div id="cobra-results-area" class="hidden">
                     <div class="border-t border-[var(--border-color)] my-10"></div>
-                    <h2 class="text-3xl font-bold mb-6">Analysis Results</h2>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-6">Analysis Results</h2>
                     <div id="cobra-results-tabs" class="st-tabs-container">
                         <button data-tab="conclusions" class="st-tab active">Conclusions</button>
                         <button data-tab="table" class="st-tab">Data Table</button>
                         <button data-tab="chart" class="st-tab">Chart</button>
                     </div>
-                    <div id="cobra-conclusions-content" class="st-tab-content active bg-[var(--bg-light)] p-6 rounded-lg"></div>
-                    <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-6 rounded-lg"></div>
-                    <div id="cobra-chart-content" class="st-tab-content bg-white p-6 rounded-lg h-96"></div>
+                    <div id="cobra-conclusions-content" class="st-tab-content active bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
+                    <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
+                    <div id="cobra-chart-content" class="st-tab-content bg-white p-4 md:p-6 rounded-lg h-96"></div>
                 </div>
             `;
             setupCobraEventListeners();
@@ -653,6 +737,7 @@
             document.getElementById('cobra-ics-multiselect').addEventListener('change', updateSpecEditor);
 
             const deltaContainer = document.getElementById('cobra-delta-content');
+            // RWD Change: made delta pair selection responsive
             deltaContainer.innerHTML = `
                 <div id="cobra-delta-pairs-container" class="space-y-3"></div>
                 <button id="cobra-add-delta-pair" class="mt-4 text-sm bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-2 px-4 rounded-lg w-full transition">Add ΔT Pair</button>`;
@@ -661,7 +746,8 @@
 
         function updateSpecEditor() {
             const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
-            const container = document.getElementById('cobra-spec-editor-container').querySelector('.overflow-x-auto');
+            // RWD Change: targeting the new container div
+            const container = document.getElementById('cobra-spec-editor-container').querySelector('div');
             
             if (selectedIcs.length === 0) {
                 container.innerHTML = '<p class="p-4 text-center text-slate-500">Select Key ICs to input specifications.</p>';
@@ -671,6 +757,7 @@
             const tableId = 'cobra-spec-table';
             let table = document.getElementById(tableId);
             if (!table) {
+                // RWD Change: Using 'data-editor-table' class to apply responsive styles
                 container.innerHTML = `<table id="${tableId}" class="data-editor-table"></table>`;
                 table = document.getElementById(tableId);
                 table.innerHTML = `
@@ -684,23 +771,25 @@
             const tbody = table.querySelector('tbody');
             const existingIcs = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset.ic);
 
+            const headers = ['Component', 'Spec Type', 'Tj (°C)', 'Rjc (°C/W)', 'Pd (W)', 'Ta Limit (°C)'];
             for (const ic of selectedIcs) {
                 if (!existingIcs.includes(ic)) {
                     const row = tbody.insertRow();
                     row.dataset.ic = ic;
+                    // RWD Change: Add data-label attributes for responsive view
                     row.innerHTML = `
-                        <td>${ic}</td>
-                        <td>
+                        <td data-label="Component">${ic}</td>
+                        <td data-label="Spec Type">
                             <select class="spec-type-select">
                                 <option value="Tc" selected>Tc</option>
                                 <option value="Tj">Tj</option>
                                 <option value="Ta">Ta</option>
                             </select>
                         </td>
-                        <td><input type="number" class="spec-tj" step="0.1"></td>
-                        <td><input type="number" class="spec-rjc" step="0.1"></td>
-                        <td><input type="number" class="spec-pd" step="0.1"></td>
-                        <td><input type="number" class="spec-ta" step="0.1" style="display:none;"></td>
+                        <td data-label="Tj (°C)"><input type="number" class="spec-tj" step="0.1"></td>
+                        <td data-label="Rjc (°C/W)"><input type="number" class="spec-rjc" step="0.1"></td>
+                        <td data-label="Pd (W)"><input type="number" class="spec-pd" step="0.1"></td>
+                        <td data-label="Ta Limit (°C)"><input type="number" class="spec-ta" step="0.1" style="display:none;"></td>
                     `;
                 }
             }
@@ -715,6 +804,7 @@
             tbody.querySelectorAll('.spec-type-select').forEach(sel => handleSpecTypeChange({target: sel}));
         }
 
+        // --- All the remaining JS functions (handleSpecTypeChange, addDeltaPair, cleanSeriesHeader, cleanComponentDisplayName, cobraPreStudy, runCobraAnalysis, renderCobraResults, renderCobraConclusions, renderCobraTable, downloadTableAsPNG, downloadCobraExcel, renderCobraChart) can remain exactly the same. They handle logic, not layout. I'm including them here for completeness. ---
         function handleSpecTypeChange(event) {
             const select = event.target;
             const row = select.closest('tr');
@@ -724,10 +814,19 @@
             const pdInput = row.querySelector('.spec-pd');
             const taInput = row.querySelector('.spec-ta');
 
-            tjInput.style.display = (type === 'Tc' || type === 'Tj') ? '' : 'none';
-            rjcInput.style.display = (type === 'Tc') ? '' : 'none';
-            pdInput.style.display = (type === 'Tc') ? '' : 'none';
-            taInput.style.display = (type === 'Ta') ? '' : 'none';
+            // Find the parent TD for each input
+            const tjCell = tjInput.closest('td');
+            const rjcCell = rjcInput.closest('td');
+            const pdCell = pdInput.closest('td');
+            const taCell = taInput.closest('td');
+
+            // In mobile (block) view, hide the entire TD. In desktop (table-cell), just hide the input.
+            const displayStyle = (window.innerWidth < 768) ? 'block' : 'table-cell';
+
+            tjCell.style.display = (type === 'Tc' || type === 'Tj') ? displayStyle : 'none';
+            rjcCell.style.display = (type === 'Tc') ? displayStyle : 'none';
+            pdCell.style.display = (type === 'Tc') ? displayStyle : 'none';
+            taCell.style.display = (type === 'Ta') ? displayStyle : 'none';
         }
 
         function addDeltaPair() {
@@ -738,13 +837,14 @@
             selectedSeries.forEach(s => optionsHtml += `<option value="${s}">${s}</option>`);
 
             const pairDiv = document.createElement('div');
-            pairDiv.className = 'grid grid-cols-11 gap-2 items-center';
+            // RWD Change: Make it stack on mobile and be horizontal on larger screens
+            pairDiv.className = 'grid grid-cols-1 sm:grid-cols-11 gap-2 items-center';
             pairDiv.innerHTML = `
-                <div class="col-span-5">
+                <div class="sm:col-span-5">
                     <select class="w-full bg-[var(--bg-light)] border border-[var(--border-color)] rounded p-1 text-sm">${optionsHtml}</select>
                 </div>
-                <span class="text-center col-span-1">-</span>
-                <div class="col-span-5">
+                <span class="text-center hidden sm:block sm:col-span-1">-</span>
+                <div class="sm:col-span-5">
                      <select class="w-full bg-[var(--bg-light)] border border-[var(--border-color)] rounded p-1 text-sm">${optionsHtml}</select>
                 </div>
             `;
@@ -1058,7 +1158,7 @@
                 return;
             }
             container.innerHTML = `<div id="cobra-table-render" class="overflow-x-auto p-2 bg-white"></div>
-                <div class="mt-6 flex gap-4">
+                <div class="mt-6 flex flex-col sm:flex-row gap-4">
                     <button id="cobra-download-png" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">Download as PNG</button>
                     <button id="cobra-download-excel" class="flex-1 bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">Download as Formatted Excel</button>
                 </div>`;
@@ -1144,7 +1244,6 @@
             const ws = {};
             const headers = Object.keys(tableData[0]);
 
-            // Define styles using the correct xlsx.js structure
             const border = { top: { style: "thin", color: { rgb: "D9D9D9" } }, bottom: { style: "thin", color: { rgb: "D9D9D9" } }, left: { style: "thin", color: { rgb: "D9D9D9" } }, right: { style: "thin", color: { rgb: "D9D9D9" } } };
             const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "606060" } }, alignment: { horizontal: "center", vertical: "center" }, border: border };
             const defaultCellStyle = { fill: { fgColor: { rgb: "F2F2F2" } }, alignment: { horizontal: "center", vertical: "center" }, border: border, numFmt: "0.0" };
@@ -1152,13 +1251,11 @@
             const passStyle = { ...defaultCellStyle, font: { color: { rgb: "006100" }, bold: true }, fill: { fgColor: { rgb: "C6EFCE" } } };
             const failStyle = { ...defaultCellStyle, font: { color: { rgb: "9C0006" }, bold: true }, fill: { fgColor: { rgb: "FFC7CE" } } };
 
-            // Write headers and apply styles
             headers.forEach((header, C) => {
                 const cellRef = XLSX.utils.encode_cell({ c: C, r: 0 });
                 ws[cellRef] = { v: header, t: 's', s: headerStyle };
             });
 
-            // Write data rows and apply styles
             tableData.forEach((row, R) => {
                 const rowNum = R + 1;
                 headers.forEach((header, C) => {
@@ -1166,7 +1263,6 @@
                     let value = row[header];
                     let cell = {};
 
-                    // Handle cell type and value
                     if (value === null || typeof value === 'undefined' || (typeof value === 'number' && isNaN(value))) {
                         cell.v = "N/A";
                         cell.t = 's';
@@ -1174,7 +1270,6 @@
                         cell.v = value;
                         cell.t = 'n';
                     } else {
-                        // Check if it's a string that can be a number
                         const numVal = parseFloat(value);
                         if (!isNaN(numVal) && value.trim() === numVal.toString()) {
                              cell.v = numVal;
@@ -1185,14 +1280,12 @@
                         }
                     }
 
-                    // Determine and apply style
                     let style = (header === 'Component') ? componentCellStyle : defaultCellStyle;
                     if (header === 'Result') {
                         if (cell.v === 'PASS') style = passStyle;
                         else if (cell.v === 'FAIL') style = failStyle;
                     }
                     
-                    // Apply number formatting for numeric cells
                     if (cell.t === 'n') {
                         style = { ...style, numFmt: "0.0" };
                     }
@@ -1202,7 +1295,6 @@
                 });
             });
 
-            // Set column widths
             ws['!cols'] = headers.map(h => {
                 if (h === 'Component') return { wch: 30 };
                 if (h === 'Spec (°C)') return { wch: 15 };
@@ -1288,7 +1380,7 @@
                         }
                     },
                     plugins: {
-                        title: { display: true, text: 'Key IC Temperature Comparison', color: '#111', font: {size: 18, weight: 'bold'} },
+                        title: { display: true, text: 'Key IC Temperature Comparison', color: '#111', font: {size: 16, weight: 'bold'} },
                         legend: {
                             position: 'bottom',
                             labels: { color: '#333' }
