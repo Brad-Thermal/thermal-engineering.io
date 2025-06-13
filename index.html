@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #121212;
@@ -21,6 +22,9 @@
             --accent-blue: #0A84FF;
             --accent-green: #30D158;
             --accent-red: #FF453A;
+            --accent-cyan: #64D2FF;
+            --ekg-glow-red: #ff3333;
+            --ekg-grid-green: #33ff33;
         }
         body { 
             font-family: 'Inter', sans-serif; 
@@ -72,52 +76,92 @@
         .multiselect-container label:hover { background-color: var(--bg-lighter); }
         .tool-selector.active { background-color: var(--accent-blue); color: white; }
 
-        /* --- RWD Change: Responsive Table Styles --- */
-        /* On screens smaller than 768px (Tailwind's 'md' breakpoint) */
         @media (max-width: 767px) {
-            .data-editor-table {
-                min-width: 100%; /* Remove fixed min-width on mobile */
-            }
-            .data-editor-table thead {
-                display: none; /* Hide table headers, we'll use data-labels instead */
-            }
-            .data-editor-table tr {
-                display: block;
-                margin-bottom: 1rem;
-                border: 1px solid var(--border-color);
-                border-radius: 0.5rem;
-                overflow: hidden;
-            }
-            .data-editor-table td {
-                display: block;
-                text-align: right; /* Align value to the right */
-                position: relative;
-                padding-left: 50%; /* Make space for the label */
-                border: none;
-                border-bottom: 1px solid var(--border-color);
-            }
-            .data-editor-table td:last-child {
-                 border-bottom: none;
-            }
-            .data-editor-table td::before {
-                content: attr(data-label); /* Use data-label for the header text */
-                position: absolute;
-                left: 0.75rem;
-                width: calc(50% - 1.5rem);
-                text-align: left;
-                font-weight: bold;
-                white-space: nowrap;
-                color: var(--text-secondary);
-            }
+            .data-editor-table { min-width: 100%; }
+            .data-editor-table thead { display: none; }
+            .data-editor-table tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+            .data-editor-table td { display: block; text-align: right; position: relative; padding-left: 50%; border: none; border-bottom: 1px solid var(--border-color); }
+            .data-editor-table td:last-child { border-bottom: none; }
+            .data-editor-table td::before { content: attr(data-label); position: absolute; left: 0.75rem; width: calc(50% - 1.5rem); text-align: left; font-weight: bold; white-space: nowrap; color: var(--text-secondary); }
         }
+
+        /* --- EKG Loader Animation Styles (1s) --- */
+        .ekg-loader {
+            position: relative;
+            width: 250px;
+            height: 120px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right, rgba(51, 255, 51, 0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(51, 255, 51, 0.2) 1px, transparent 1px);
+            animation: pulse-grid 1s infinite ease-in-out;
+            mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, black 60%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, black 60%, transparent 100%);
+        }
+        .ekg-loader svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .ekg-line {
+            stroke: var(--ekg-glow-red);
+            stroke-width: 2.5;
+            fill: none;
+            stroke-dasharray: 450;
+            stroke-dashoffset: 450;
+            animation: draw-ekg 1s infinite linear;
+            filter: drop-shadow(0 0 3px var(--ekg-glow-red)) drop-shadow(0 0 6px rgba(255, 51, 51, 0.5));
+        }
+        .pulse-dot {
+            fill: white;
+            stroke: var(--ekg-glow-red);
+            stroke-width: 2;
+            animation: move-dot 1s infinite linear;
+            filter: drop-shadow(0 0 5px white);
+        }
+
+        @keyframes draw-ekg { to { stroke-dashoffset: 0; } }
+        @keyframes move-dot {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        @keyframes pulse-grid {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        /* --- End of Loader Styles --- */
+
     </style>
 </head>
 <body class="text-slate-200">
 
-    <div id="loader" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center z-50 hidden">
-        <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <p id="loader-text" class="mt-4 text-slate-300">Initializing System...</p>
+    <div id="loader" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 hidden">
+        <div class="ekg-loader rounded-lg shadow-2xl shadow-red-500/10">
+            <div class="grid-background"></div>
+            <svg viewBox="0 0 250 120">
+                <path class="ekg-line" d="M0 60 H40 L50 80 L60 40 L65 65 L70 55 L75 60 L100 60 L110 50 L120 75 L130 30 L135 60 L160 60 L170 85 L180 60 L190 60 H250" />
+                <circle class="pulse-dot" r="3">
+                    <animateMotion dur="1s" repeatCount="indefinite" path="M0 60 H40 L50 80 L60 40 L65 65 L70 55 L75 60 L100 60 L110 50 L120 75 L130 30 L135 60 L160 60 L170 85 L180 60 L190 60 H250" />
+                </circle>
+            </svg>
+        </div>
+        <p id="loader-text" class="mt-8 text-lg font-mono tracking-widest text-[var(--ekg-glow-red)] animate-pulse">ANALYZING SYSTEM PULSE...</p>
     </div>
+
 
     <div id="message-box"></div>
 
@@ -149,7 +193,7 @@
         </div>
 
         <div id="register-view" class="view hidden flex items-center justify-center h-full" style="background-color: var(--bg-dark);">
-             <div class="w-full max-w-sm mx-auto p-4">
+            <div class="w-full max-w-sm mx-auto p-4">
                 <div class="bg-transparent p-8">
                     <div class="text-center mb-8">
                         <h1 class="text-3xl font-bold text-white">Create New Account</h1>
@@ -203,7 +247,7 @@
                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <h1 id="mobile-tool-title" class="text-xl font-bold">Cobra</h1>
-                    <div></div>
+                    <div><!-- Spacer --></div>
                 </header>
                 
                 <div id="cobra-ui" class="tool-ui hidden"></div>
@@ -228,7 +272,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <script>
-        // --- App Logic (Firebase etc. remains the same) ---
         let currentUserData = null;
         let auth, db;
         const loader = document.getElementById('loader');
@@ -240,7 +283,10 @@
         function showView(viewName) {
             Object.keys(views).forEach(key => views[key].classList.toggle('hidden', key !== viewName));
             appWrapper.classList.remove('hidden');
-            loader.classList.add('hidden');
+
+            if (viewName === 'auth' || viewName === 'register') {
+                loader.classList.add('hidden');
+            }
         }
 
         function showMessage(text, type = 'info') {
@@ -261,9 +307,10 @@
                 measurementId: "G-9HKXSTC6LE"
             };
 
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("PASTE_YOUR")) {
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
                 loaderText.textContent = 'Error: Firebase configuration is missing.';
                 loaderText.classList.add('text-red-400');
+                if(document.querySelector('.ekg-loader')) document.querySelector('.ekg-loader').style.display = 'none';
                 loader.classList.remove('hidden');
                 return;
             }
@@ -276,6 +323,7 @@
                 console.error("Firebase initialization failed:", error);
                 loaderText.textContent = `Error: Could not initialize backend services. ${error.message}`;
                 loaderText.classList.add('text-red-400');
+                if(document.querySelector('.ekg-loader')) document.querySelector('.ekg-loader').style.display = 'none';
                 return;
             }
             
@@ -288,12 +336,16 @@
                 }
             });
             setupAuthEventListeners();
-            // RWD Change: Setup listeners for the new mobile navigation
             setupMobileNavEventListeners(); 
         }
 
         async function checkUserStatusAndData(user) {
-            if (!user.email) { showView('auth'); return; }
+            const startTime = Date.now();
+
+            if (!user.email) { 
+                showView('auth'); 
+                return; 
+            }
             const userDocRef = db.collection("users").doc(user.uid);
             try {
                 const docSnap = await userDocRef.get();
@@ -302,22 +354,43 @@
                     document.getElementById('user-email-display').textContent = currentUserData.email;
                     document.getElementById('admin-panel-button').classList.toggle('hidden', currentUserData.role !== 'admin');
                     if (currentUserData.role === 'admin') listenForUserUpdates();
-                    showView('main');
                     initializeSercommSuite(currentUserData);
+                    showView('main');
                 } else {
-                    showMessage("Account registered, but pending admin approval.", "info");
+                    showMessage("Account is pending approval or has been deactivated.", "info");
                     auth.signOut();
                 }
-            } catch (error) { console.error("Error fetching user data:", error); showMessage("Error reading user data.", "error"); auth.signOut(); }
-            finally { loader.classList.add('hidden'); }
+            } catch (error) { 
+                console.error("Error fetching user data:", error); 
+                showMessage("Error reading user data.", "error"); 
+                auth.signOut(); 
+            } finally {
+                const elapsedTime = Date.now() - startTime;
+                const minimumDisplayTime = 1000; // 1 second
+                const remainingTime = Math.max(0, minimumDisplayTime - elapsedTime);
+
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                }, remainingTime);
+            }
         }
 
         function setupAuthEventListeners() {
-            document.getElementById('login-form').addEventListener('submit', async (e) => { e.preventDefault(); loader.classList.remove('hidden'); try { await auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (error) { showMessage("Login failed. Please check your credentials.", "error"); loader.classList.add('hidden'); } });
+            document.getElementById('login-form').addEventListener('submit', async (e) => { 
+                e.preventDefault(); 
+                loader.classList.remove('hidden'); 
+                try { 
+                    await auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value); 
+                } catch (error) { 
+                    showMessage("Login failed. Please check your credentials.", "error"); 
+                    loader.classList.add('hidden'); 
+                } 
+            });
             
             document.getElementById('register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 loader.classList.remove('hidden');
+                loaderText.textContent = "Submitting application...";
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
                 
@@ -334,7 +407,7 @@
                     });
                     
                     if (isAllowedDomain) {
-                        showMessage("Registration successful! Your company account is auto-activated. Please log in.", "success");
+                        showMessage("Registration successful! Your account is active. Please log in.", "success");
                     } else {
                         showMessage("Application submitted! Your account is pending admin approval.", "info");
                     }
@@ -342,7 +415,7 @@
                     auth.signOut();
                     showView('auth');
                 } catch (error) {
-                    showMessage(error.code === 'auth/email-already-in-use' ? "This email is already registered." : "Registration failed.", "error");
+                    showMessage(error.code === 'auth/email-already-in-use' ? "This email is already registered." : "Registration failed. Please try again.", "error");
                 } finally {
                     loader.classList.add('hidden');
                 }
@@ -354,8 +427,7 @@
             document.getElementById('admin-panel-button').addEventListener('click', () => showView('admin'));
             document.getElementById('back-to-app-button').addEventListener('click', () => showView('main'));
         }
-
-        // RWD Change: New function to handle mobile navigation (hamburger menu)
+        
         function setupMobileNavEventListeners() {
             const hamburgerBtn = document.getElementById('hamburger-menu-button');
             const sidebar = document.getElementById('main-sidebar');
@@ -369,10 +441,9 @@
             hamburgerBtn.addEventListener('click', toggleSidebar);
             overlay.addEventListener('click', toggleSidebar);
             
-            // Also close sidebar when a tool is selected on mobile
             document.querySelectorAll('#main-sidebar .tool-selector').forEach(selector => {
                 selector.addEventListener('click', () => {
-                    if (window.innerWidth < 1024) { // 1024px is Tailwind's 'lg' breakpoint
+                    if (window.innerWidth < 1024) { 
                         toggleSidebar();
                     }
                 });
@@ -413,7 +484,6 @@
             renderViperUI();
             renderCobraUI();
             
-            // RWD Change: Added logic to update the mobile header title
             const mobileToolTitle = document.getElementById('mobile-tool-title');
             
             document.querySelectorAll('.tool-selector').forEach(selector => {
@@ -425,7 +495,6 @@
                     const toolId = selector.id.replace('tool-', '') + '-ui';
                     document.getElementById(toolId).classList.remove('hidden');
 
-                    // RWD Change: Update title
                     const toolName = selector.textContent.trim();
                     mobileToolTitle.textContent = toolName;
                 });
@@ -437,7 +506,6 @@
             const viperUI = document.getElementById('viper-ui');
             const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
             const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
-            // RWD Change: Changed p-x classes to be responsive
             viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
                                     <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
                                     <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
@@ -495,7 +563,6 @@
             setupViperEventListeners();
         }
         
-        // --- All the calculateAndDisplay functions remain the same ---
         function setupViperEventListeners() {
             const tabs = document.querySelectorAll('#viper-tabs .st-tab');
             const contents = document.querySelectorAll('#viper-ui .st-tab-content');
@@ -557,7 +624,6 @@
             resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">☀️ Absorbed Solar Heat Gain</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${solar_gain.toFixed(1)} W</p></div>`;
         }
         
-        // --- COBRA JAVASCRIPT ---
         const cobraState = {};
 
         function renderCobraUI() {
@@ -737,7 +803,6 @@
             document.getElementById('cobra-ics-multiselect').addEventListener('change', updateSpecEditor);
 
             const deltaContainer = document.getElementById('cobra-delta-content');
-            // RWD Change: made delta pair selection responsive
             deltaContainer.innerHTML = `
                 <div id="cobra-delta-pairs-container" class="space-y-3"></div>
                 <button id="cobra-add-delta-pair" class="mt-4 text-sm bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-2 px-4 rounded-lg w-full transition">Add ΔT Pair</button>`;
@@ -746,7 +811,6 @@
 
         function updateSpecEditor() {
             const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
-            // RWD Change: targeting the new container div
             const container = document.getElementById('cobra-spec-editor-container').querySelector('div');
             
             if (selectedIcs.length === 0) {
@@ -757,7 +821,6 @@
             const tableId = 'cobra-spec-table';
             let table = document.getElementById(tableId);
             if (!table) {
-                // RWD Change: Using 'data-editor-table' class to apply responsive styles
                 container.innerHTML = `<table id="${tableId}" class="data-editor-table"></table>`;
                 table = document.getElementById(tableId);
                 table.innerHTML = `
@@ -776,7 +839,6 @@
                 if (!existingIcs.includes(ic)) {
                     const row = tbody.insertRow();
                     row.dataset.ic = ic;
-                    // RWD Change: Add data-label attributes for responsive view
                     row.innerHTML = `
                         <td data-label="Component">${ic}</td>
                         <td data-label="Spec Type">
@@ -803,8 +865,7 @@
             tbody.querySelectorAll('.spec-type-select').forEach(sel => sel.onchange = handleSpecTypeChange);
             tbody.querySelectorAll('.spec-type-select').forEach(sel => handleSpecTypeChange({target: sel}));
         }
-
-        // --- All the remaining JS functions (handleSpecTypeChange, addDeltaPair, cleanSeriesHeader, cleanComponentDisplayName, cobraPreStudy, runCobraAnalysis, renderCobraResults, renderCobraConclusions, renderCobraTable, downloadTableAsPNG, downloadCobraExcel, renderCobraChart) can remain exactly the same. They handle logic, not layout. I'm including them here for completeness. ---
+        
         function handleSpecTypeChange(event) {
             const select = event.target;
             const row = select.closest('tr');
@@ -814,13 +875,11 @@
             const pdInput = row.querySelector('.spec-pd');
             const taInput = row.querySelector('.spec-ta');
 
-            // Find the parent TD for each input
             const tjCell = tjInput.closest('td');
             const rjcCell = rjcInput.closest('td');
             const pdCell = pdInput.closest('td');
             const taCell = taInput.closest('td');
 
-            // In mobile (block) view, hide the entire TD. In desktop (table-cell), just hide the input.
             const displayStyle = (window.innerWidth < 768) ? 'block' : 'table-cell';
 
             tjCell.style.display = (type === 'Tc' || type === 'Tj') ? displayStyle : 'none';
@@ -837,7 +896,6 @@
             selectedSeries.forEach(s => optionsHtml += `<option value="${s}">${s}</option>`);
 
             const pairDiv = document.createElement('div');
-            // RWD Change: Make it stack on mobile and be horizontal on larger screens
             pairDiv.className = 'grid grid-cols-1 sm:grid-cols-11 gap-2 items-center';
             pairDiv.innerHTML = `
                 <div class="sm:col-span-5">
@@ -958,7 +1016,7 @@
         
         function runCobraAnalysis() {
             loader.classList.remove('hidden');
-            loaderText.textContent = 'Running analysis...';
+            loaderText.textContent = 'ANALYZING SYSTEM PULSE...';
             
             try {
                 const selectedSeries = Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value);
@@ -1164,7 +1222,7 @@
                 </div>`;
 
             const tableContainer = document.getElementById('cobra-table-render');
-            tableContainer.innerHTML = ''; // Clear previous table
+            tableContainer.innerHTML = ''; 
             const table = document.createElement('table');
             table.className = 'w-full';
             table.style.borderCollapse = 'collapse';
@@ -1207,12 +1265,12 @@
 
                     if (h === 'Result') {
                         if (cellValue === 'PASS') {
-                            td.style.backgroundColor = '#C6EFCE'; // Light Green
-                            td.style.color = '#006100'; // Dark Green
+                            td.style.backgroundColor = '#C6EFCE';
+                            td.style.color = '#006100';
                         }
                         if (cellValue === 'FAIL') {
-                            td.style.backgroundColor = '#FFC7CE'; // Light Red
-                            td.style.color = '#9C0006'; // Dark Red
+                            td.style.backgroundColor = '#FFC7CE';
+                            td.style.color = '#9C0006';
                         }
                     }
                 });
@@ -1331,7 +1389,7 @@
                         const val = d[seriesName];
                         return val !== null && !isNaN(val) ? val.toFixed(1) : null;
                     }),
-                    backgroundColor: colors[i % colors.length] + 'B3', // 70% opacity
+                    backgroundColor: colors[i % colors.length] + 'B3', 
                     borderColor: colors[i % colors.length],
                     borderWidth: 1,
                     borderRadius: 4,
@@ -1409,7 +1467,6 @@
             };
         }
 
-        // Run Application
         initializeAndRunApp();
 
     </script>
