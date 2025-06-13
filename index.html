@@ -335,7 +335,10 @@
                     showView('auth');
                 }
             });
-            setupAuthEventListeners();
+
+            // Setup all event listeners
+            setupFormEventListeners();
+            setupGlobalEventListeners();
             setupMobileNavEventListeners(); 
         }
 
@@ -366,7 +369,7 @@
                 auth.signOut(); 
             } finally {
                 const elapsedTime = Date.now() - startTime;
-                const minimumDisplayTime = 1000; // 1 second
+                const minimumDisplayTime = 1000;
                 const remainingTime = Math.max(0, minimumDisplayTime - elapsedTime);
 
                 setTimeout(() => {
@@ -375,7 +378,8 @@
             }
         }
 
-        function setupAuthEventListeners() {
+        // Handles form submissions
+        function setupFormEventListeners() {
             document.getElementById('login-form').addEventListener('submit', async (e) => { 
                 e.preventDefault(); 
                 loader.classList.remove('hidden'); 
@@ -420,12 +424,52 @@
                     loader.classList.add('hidden');
                 }
             });
+        }
+        
+        // Handles global click events for navigation and actions using event delegation
+        function setupGlobalEventListeners() {
+            document.body.addEventListener('click', async (e) => {
+                const targetId = e.target.id;
+                
+                // Handle button/link clicks based on ID
+                switch(targetId) {
+                    case 'admin-panel-button':
+                        showView('admin');
+                        break;
+                    case 'back-to-app-button':
+                        showView('main');
+                        break;
+                    case 'logout-button':
+                        auth.signOut();
+                        break;
+                    case 'show-register':
+                        e.preventDefault();
+                        showView('register');
+                        break;
+                    case 'show-login':
+                        e.preventDefault();
+                        showView('auth');
+                        break;
+                }
 
-            document.getElementById('logout-button').addEventListener('click', () => auth.signOut());
-            document.getElementById('show-register').addEventListener('click', (e) => { e.preventDefault(); showView('register'); });
-            document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); showView('auth'); });
-            document.getElementById('admin-panel-button').addEventListener('click', () => showView('admin'));
-            document.getElementById('back-to-app-button').addEventListener('click', () => showView('main'));
+                // Handle clicks in the admin user list
+                if (e.target.classList.contains('toggle-active-btn')) {
+                    const button = e.target;
+                    const userId = button.dataset.id;
+                    const isActive = button.dataset.active === 'true';
+
+                    if (userId === auth.currentUser?.uid && isActive) { 
+                        showMessage("You cannot deactivate your own account.", "error"); 
+                        return; 
+                    }
+                    try {
+                        await db.collection("users").doc(userId).update({ isActive: !isActive });
+                        showMessage(`User status updated.`, "success");
+                    } catch (err) {
+                        showMessage(`Error updating user: ${err.message}`, "error");
+                    }
+                }
+            });
         }
         
         function setupMobileNavEventListeners() {
@@ -453,8 +497,9 @@
         let unsubscribeUserList; 
         function listenForUserUpdates() {
             if (unsubscribeUserList) unsubscribeUserList();
-            unsubscribeUserList = db.collection("users").onSnapshot((snapshot) => {
+            unsubscribeUserList = db.collection("users").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 const userListBody = document.getElementById('user-list-body');
+                if (!userListBody) return;
                 userListBody.innerHTML = '';
                 snapshot.forEach(docSnap => {
                     const user = { id: docSnap.id, ...docSnap.data() };
@@ -470,15 +515,6 @@
                 showMessage("Could not load user list for admin panel.", "error");
             });
         }
-
-        document.getElementById('user-list-body').addEventListener('click', async (e) => {
-            if (!e.target.classList.contains('toggle-active-btn')) return;
-            const userId = e.target.dataset.id;
-            if (userId === auth.currentUser.uid && !(e.target.dataset.active === 'true')) { showMessage("You cannot deactivate your own account.", "error"); return; }
-            const newStatus = !(e.target.dataset.active === 'true');
-            await db.collection("users").doc(userId).update({ isActive: newStatus });
-            showMessage(`User status updated.`, "success");
-        });
 
         function initializeSercommSuite(user) {
             renderViperUI();
