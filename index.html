@@ -311,7 +311,7 @@
             };
 
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
-                loaderText.textContent = '錯誤：缺少 Firebase 設定。';
+                loaderText.textContent = 'Error: Firebase configuration is missing.';
                 loaderText.classList.add('text-red-400');
                 if(document.querySelector('.ekg-loader')) document.querySelector('.ekg-loader').style.display = 'none';
                 loader.classList.remove('hidden');
@@ -323,8 +323,8 @@
                 auth = firebase.auth();
                 db = firebase.firestore();
             } catch (error) {
-                console.error("Firebase 初始化失敗:", error);
-                loaderText.textContent = `錯誤：無法初始化後端服務。 ${error.message}`;
+                console.error("Firebase initialization failed:", error);
+                loaderText.textContent = `Error: Could not initialize backend services. ${error.message}`;
                 loaderText.classList.add('text-red-400');
                 if(document.querySelector('.ekg-loader')) document.querySelector('.ekg-loader').style.display = 'none';
                 return;
@@ -364,12 +364,12 @@
                     initializeSercommSuite(currentUserData);
                     showView('main');
                 } else {
-                    showMessage("帳號待審核或已被停用。", "info");
+                    showMessage("Account is pending approval or has been deactivated.", "info");
                     auth.signOut();
                 }
             } catch (error) { 
-                console.error("讀取使用者資料時發生錯誤:", error); 
-                showMessage("讀取使用者資料時發生錯誤。", "error"); 
+                console.error("Error fetching user data:", error); 
+                showMessage("Error reading user data.", "error"); 
                 auth.signOut(); 
             } finally {
                 const elapsedTime = Date.now() - startTime;
@@ -389,7 +389,7 @@
                 try { 
                     await auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value); 
                 } catch (error) { 
-                    showMessage("登入失敗，請檢查您的帳號密碼。", "error"); 
+                    showMessage("Login failed. Please check your credentials.", "error"); 
                     loader.classList.add('hidden'); 
                 } 
             });
@@ -397,7 +397,7 @@
             document.getElementById('register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 loader.classList.remove('hidden');
-                loaderText.textContent = "正在提交申請...";
+                loaderText.textContent = "Submitting application...";
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
                 const allowedDomain = "sercomm.com";
@@ -413,14 +413,14 @@
                     });
                     
                     if (isAllowedDomain) {
-                        showMessage("註冊成功！您的帳號已啟用，請登入。", "success");
+                        showMessage("Registration successful! Your account is active. Please log in.", "success");
                     } else {
-                        showMessage("申請已提交！您的帳號正在等待管理員審核。", "info");
+                        showMessage("Application submitted! Your account is pending admin approval.", "info");
                     }
                     auth.signOut();
                     showView('auth');
                 } catch (error) {
-                    showMessage(error.code === 'auth/email-already-in-use' ? "此電子郵件已被註冊。" : "註冊失敗，請再試一次。", "error");
+                    showMessage(error.code === 'auth/email-already-in-use' ? "This email is already registered." : "Registration failed. Please try again.", "error");
                 } finally {
                     loader.classList.add('hidden');
                 }
@@ -458,14 +458,14 @@
                     const isActive = target.dataset.active === 'true';
 
                     if (userId === auth.currentUser?.uid && isActive) { 
-                        showMessage("您無法停用自己的帳號。", "error"); 
+                        showMessage("You cannot deactivate your own account.", "error"); 
                         return; 
                     }
                     try {
                         await db.collection("users").doc(userId).update({ isActive: !isActive });
-                        showMessage(`使用者狀態已更新。`, "success");
+                        showMessage(`User status updated.`, "success");
                     } catch (err) {
-                        showMessage(`更新使用者時發生錯誤: ${err.message}`, "error");
+                        showMessage(`Error updating user: ${err.message}`, "error");
                     }
                 }
             });
@@ -502,15 +502,15 @@
                 snapshot.forEach(docSnap => {
                     const user = { id: docSnap.id, ...docSnap.data() };
                     const tr = document.createElement('tr');
-                    const activeText = user.isActive ? '啟用' : '停用';
+                    const activeText = user.isActive ? 'Active' : 'Inactive';
                     const activeClass = user.isActive ? 'text-green-400' : 'text-yellow-400';
-                    const toggleActiveText = user.isActive ? '停用' : '啟用';
+                    const toggleActiveText = user.isActive ? 'Deactivate' : 'Activate';
                     tr.innerHTML = `<td class="p-3 text-sm text-slate-300">${user.email}</td><td class="p-3 text-sm text-slate-300">${user.role}</td><td class="p-3 text-sm font-medium ${activeClass}">${activeText}</td><td class="p-3 text-sm font-medium space-x-2"><button data-id="${user.id}" data-active="${user.isActive}" class="toggle-active-btn text-white px-3 py-1 text-xs rounded transition ${user.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}">${toggleActiveText}</button></td>`;
                     userListBody.appendChild(tr);
                 });
             }, (error) => {
-                console.error("監聽使用者更新時發生錯誤: ", error);
-                showMessage("無法載入管理頁面的使用者列表。", "error");
+                console.error("Error listening to user updates: ", error);
+                showMessage("Could not load user list for admin panel.", "error");
             });
         }
 
@@ -544,53 +544,53 @@
                                         <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
                                     </div>
                                     <div id="viper-tabs" class="st-tabs-container">
-                                        <button data-tab="nat-conv" class="st-tab active">🍃 自然對流</button>
-                                        <button data-tab="force-conv" class="st-tab">🌬️ 強制對流</button>
-                                        <button data-tab="solar-rad" class="st-tab">☀️ 太陽輻射</button>
+                                        <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
+                                        <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
+                                        <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
                                     </div>
                                     <div id="nat-conv-content" class="st-tab-content active">
-                                        <h2 class="text-xl md:text-2xl font-bold mb-6">被動散熱功率估算器</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
                                         <div class="grid md:grid-cols-2 gap-8">
                                             <div class="space-y-6">
-                                                <h3 class="text-lg md:text-xl font-semibold">輸入參數</h3>
-                                                <div><label for="nc_mat" class="${labelClasses}">外殼材質</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">塑膠 (ABS/PC)</option><option value="Aluminum (Anodized)">鋁 (陽極處理)</option></select></div>
+                                                <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
+                                                <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
                                                 <div>
-                                                    <label class="${labelClasses}">產品尺寸 (mm)</label>
+                                                    <label class="${labelClasses}">Product Dimensions (mm)</label>
                                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                        <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="長 (L)">
-                                                        <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="寬 (W)">
-                                                        <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="高 (H)">
+                                                        <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
+                                                        <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
+                                                        <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
                                                     </div>
                                                 </div>
                                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label for="nc_ta" class="${labelClasses}">環境溫度 (°C)</label>
+                                                        <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
                                                         <input type="number" id="nc_ta" value="25" class="${inputClasses}">
                                                     </div>
                                                     <div>
-                                                         <label for="nc_ts" class="${labelClasses}">允許表面溫度 (°C)</label>
+                                                         <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
                                                          <input type="number" id="nc_ts" value="50" class="${inputClasses}">
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
-                                                <h3 class="text-lg md:text-xl font-semibold mb-4">評估結果</h3>
+                                                <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
                                                 <div id="nc-results" class="space-y-4"></div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="force-conv-content" class="st-tab-content">
-                                        <h2 class="text-xl md:text-2xl font-bold mb-6">主動散熱風量估算器</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
                                         <div class="grid md:grid-cols-2 gap-8">
-                                            <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">輸入參數</h3><div><label for="fc_power_q" class="${labelClasses}">需散熱功率 (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">進氣口溫度 (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">最大出風口溫度 (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
-                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">評估結果</h3><div id="fc-results" class="space-y-4"></div></div>
+                                            <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
+                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
                                         </div>
                                     </div>
                                     <div id="solar-rad-content" class="st-tab-content">
-                                        <h2 class="text-xl md:text-2xl font-bold mb-6">太陽熱增益估算器</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
                                         <div class="grid md:grid-cols-2 gap-8">
-                                            <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">輸入參數</h3><div><label for="solar_mat" class="${labelClasses}">外殼顏色/表面處理</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">白色 (噴漆)</option><option value="0.40">銀色 (噴漆)</option><option value="0.80">深灰色</option><option value="0.95" selected>黑色 (塑膠/噴漆)</option><option value="custom">其他...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="自訂吸收率 (α)"></div><div><label for="solar_area" class="${labelClasses}">投影表面積 (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">太陽輻照度 (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
-                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">評估結果</h3><div id="solar-results" class="space-y-4"></div></div>
+                                            <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
+                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
                                         </div>
                                     </div>`;
             setupViperEventListeners();
@@ -621,8 +621,8 @@
             const [L, W, H, Ta, Ts_peak] = ['nc_l', 'nc_w', 'nc_h', 'nc_ta', 'nc_ts'].map(id => parseFloat(document.getElementById(id).value));
             const material_props = materials[document.getElementById('nc_mat').value];
             const resultsDiv = document.getElementById('nc-results');
-            if (Ts_peak <= Ta) { resultsDiv.innerHTML = `<p class="text-red-400">錯誤: 最高表面溫度 (Ts) 必須高於環境溫度 (Ta)。</p>`; return; }
-            if (L <= 0 || W <= 0 || H <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">錯誤: 產品尺寸 (L, W, H) 必須大於零。</p>`; return; }
+            if (Ts_peak <= Ta) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Max. Surface Temp (Ts) must be higher than Ambient Temp (Ta).</p>`; return; }
+            if (L <= 0 || W <= 0 || H <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Product dimensions (L, W, H) must be greater than zero.</p>`; return; }
             const STEFAN_BOLTZMANN_CONST = 5.67e-8, EPSILON = 1e-9, BUILT_IN_SAFETY_FACTOR = 0.9, { emissivity, k_uniform } = material_props;
             const Ts_eff = Ta + (Ts_peak - Ta) * k_uniform, delta_T_eff = Ts_eff - Ta, [L_m, W_m, H_m] = [L/1000, W/1000, H/1000];
             const A_total = 2 * (L_m*W_m + L_m*H_m + W_m*H_m), T_film = (Ts_eff + Ta) / 2, [k_air, nu_air, pr_air, g] = [0.0275, 1.85e-5, 0.72, 9.81];
@@ -635,26 +635,26 @@
             const Q_conv_total = ((h_top*L_m*W_m)+(h_bottom*L_m*W_m)+h_vert*2*(L_m*H_m+W_m*H_m))*delta_T_eff;
             const Ts_eff_K = Ts_eff + 273.15, Ta_K = Ta + 273.15, Q_rad = emissivity * STEFAN_BOLTZMANN_CONST * A_total * (Ts_eff_K**4 - Ta_K**4);
             const Q_final = (Q_conv_total + Q_rad) * BUILT_IN_SAFETY_FACTOR;
-            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">📐 表面積</p><p class="text-2xl font-bold">${A_total.toFixed(4)} m²</p></div><div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">✅ 最大可散熱功率</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${Q_final.toFixed(1)} W</p><p class="text-xs text-slate-500 mt-1">已包含材料均勻性和固定的工程安全係數 (0.9)。</p></div>`;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">📐 Surface Area</p><p class="text-2xl font-bold">${A_total.toFixed(4)} m²</p></div><div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">✅ Max. Dissipatable Power</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${Q_final.toFixed(1)} W</p><p class="text-xs text-slate-500 mt-1">Includes material uniformity and a fixed engineering safety factor (0.9).</p></div>`;
         }
         function calculateAndDisplayFC() {
             const [power_q, T_in, T_out] = ['fc_power_q', 'fc_tin', 'fc_tout'].map(id => parseFloat(document.getElementById(id).value));
             const resultsDiv = document.getElementById('fc-results');
-            if (T_out <= T_in) { resultsDiv.innerHTML = `<p class="text-red-400">錯誤: 出風口溫度必須高於進氣口溫度。</p>`; return; }
-            if (power_q <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">錯誤: 需散熱功率必須大於零。</p>`; return; }
+            if (T_out <= T_in) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Outlet Temperature must be higher than Inlet Temperature.</p>`; return; }
+            if (power_q <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Power to be dissipated must be greater than zero.</p>`; return; }
             const AIR_SPECIFIC_HEAT_CP = 1006, AIR_DENSITY_RHO = 1.225, M3S_TO_CFM_CONVERSION = 2118.88;
             const delta_T = T_out - T_in, mass_flow_rate = power_q / (AIR_SPECIFIC_HEAT_CP * delta_T);
             const volume_flow_rate_m3s = mass_flow_rate / AIR_DENSITY_RHO, cfm = volume_flow_rate_m3s * M3S_TO_CFM_CONVERSION;
-            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">🌬️ 所需風量</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${cfm.toFixed(1)} CFM</p><p class="text-xs text-slate-500 mt-1">CFM: 立方英尺每分鐘。</p></div>`;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">🌬️ Required Airflow</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${cfm.toFixed(1)} CFM</p><p class="text-xs text-slate-500 mt-1">CFM: Cubic Feet per Minute.</p></div>`;
         }
         function calculateAndDisplaySolar() {
             const matSelect = document.getElementById('solar_mat'); let alpha = parseFloat(matSelect.value);
             if (matSelect.value === 'custom') alpha = parseFloat(document.getElementById('solar_alpha_custom').value) || 0;
             const [projected_area_mm2, solar_irradiance] = ['solar_area', 'solar_irradiance'].map(id => parseFloat(document.getElementById(id).value));
             const resultsDiv = document.getElementById('solar-results');
-            if (projected_area_mm2 <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">錯誤: 投影表面積必須大於零。</p>`; return; }
+            if (projected_area_mm2 <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Projected Surface Area must be greater than zero.</p>`; return; }
             const projected_area_m2 = projected_area_mm2 / 1_000_000, solar_gain = alpha * projected_area_m2 * solar_irradiance;
-            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">☀️ 吸收的太陽熱增益</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${solar_gain.toFixed(1)} W</p></div>`;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">☀️ Absorbed Solar Heat Gain</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${solar_gain.toFixed(1)} W</p></div>`;
         }
         
         // Cobra tool specific state and functions
@@ -672,20 +672,20 @@
                 <div class="space-y-12">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                         <div class="space-y-6 md:space-y-8">
-                            <h3 class="text-lg md:text-xl font-semibold">1. 上傳 Excel 檔案</h3>
+                            <h3 class="text-lg md:text-xl font-semibold">1. Upload Excel File</h3>
                             <div class="flex gap-4">
-                                <label for="cobra-file-uploader" class="flex-grow cursor-pointer ${primaryBtnClasses} text-center">選擇檔案</label>
+                                <label for="cobra-file-uploader" class="flex-grow cursor-pointer ${primaryBtnClasses} text-center">Select File</label>
                                 <input type="file" id="cobra-file-uploader" class="hidden" accept=".xlsx, .xls">
-                                <button id="cobra-remove-file" class="${secondaryBtnClasses}">移除檔案</button>
+                                <button id="cobra-remove-file" class="${secondaryBtnClasses}">Remove File</button>
                             </div>
                             <p id="cobra-file-name" class="text-sm text-slate-400 mt-3 truncate"></p>
                         </div>
                         <div id="cobra-analysis-setup" class="hidden space-y-6">
-                            <h3 class="text-lg md:text-xl font-semibold">2. 分析參數</h3>
+                            <h3 class="text-lg md:text-xl font-semibold">2. Analysis Parameters</h3>
                             <div id="cobra-selection-tabs" class="st-tabs-container">
-                                <button data-tab="series" class="st-tab active">測試組態</button>
-                                <button data-tab="ics" class="st-tab">關鍵 IC</button>
-                                <button data-tab="delta" class="st-tab">ΔT 比較</button>
+                                <button data-tab="series" class="st-tab active">Configurations</button>
+                                <button data-tab="ics" class="st-tab">Key ICs</button>
+                                <button data-tab="delta" class="st-tab">ΔT Comparison</button>
                             </div>
                             <div id="cobra-series-content" class="st-tab-content active"></div>
                             <div id="cobra-ics-content" class="st-tab-content"></div>
@@ -694,7 +694,7 @@
                     </div>
                     
                     <div id="cobra-specs-column" class="hidden space-y-6">
-                        <h3 class="text-lg md:text-xl font-semibold">3. 關鍵 IC 規格輸入</h3>
+                        <h3 class="text-lg md:text-xl font-semibold">3. Key IC Specification Input</h3>
                         <div class="bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg p-1">
                             <div id="cobra-spec-editor-container" class="max-h-[30rem] overflow-y-auto">
                                 <div></div>
@@ -703,16 +703,16 @@
                     </div>
                 </div>
                 <div id="cobra-run-analysis-container" class="hidden border-t border-[var(--border-color)] my-10 pt-8">
-                    <button id="cobra-run-analysis" class="w-full max-w-xs mx-auto block text-white font-bold py-3 px-4 rounded-lg text-base transition bg-[var(--accent-green)] hover:bg-green-600">🚀 分析選定資料</button>
+                    <button id="cobra-run-analysis" class="w-full max-w-xs mx-auto block text-white font-bold py-3 px-4 rounded-lg text-base transition bg-[var(--accent-green)] hover:bg-green-600">🚀 Analyze Selected Data</button>
                 </div>
 
                 <div id="cobra-results-area" class="hidden">
                     <div class="border-t border-[var(--border-color)] my-10"></div>
-                    <h2 class="text-2xl md:text-3xl font-bold mb-6">分析結果</h2>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-6">Analysis Results</h2>
                     <div id="cobra-results-tabs" class="st-tabs-container">
-                        <button data-tab="conclusions" class="st-tab active">結論</button>
-                        <button data-tab="table" class="st-tab">資料表</button>
-                        <button data-tab="chart" class="st-tab">圖表</button>
+                        <button data-tab="conclusions" class="st-tab active">Conclusions</button>
+                        <button data-tab="table" class="st-tab">Data Table</button>
+                        <button data-tab="chart" class="st-tab">Chart</button>
                     </div>
                     <div id="cobra-conclusions-content" class="st-tab-content active bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
                     <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
@@ -763,9 +763,9 @@
             if (!file) return;
 
             resetCobraState();
-            document.getElementById('cobra-file-name').textContent = `檔案: ${file.name}`;
+            document.getElementById('cobra-file-name').textContent = `File: ${file.name}`;
             loader.classList.remove('hidden');
-            loaderText.textContent = '正在預分析 Excel 檔案...';
+            loaderText.textContent = 'Pre-analyzing Excel file...';
 
             try {
                 const data = await file.arrayBuffer();
@@ -777,7 +777,7 @@
                 document.getElementById('cobra-specs-column').classList.remove('hidden');
                 document.getElementById('cobra-run-analysis-container').classList.remove('hidden');
             } catch (err) {
-                showMessage(`處理檔案時發生錯誤: ${err.message}`, 'error');
+                showMessage(`Error processing file: ${err.message}`, 'error');
                 resetCobraState();
             } finally {
                 loader.classList.add('hidden');
@@ -787,7 +787,7 @@
         function populateCobraControls(data) {
             const neutralBtnClasses = "text-xs flex-1 bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-1 px-2 rounded-md transition";
             const seriesContainer = document.getElementById('cobra-series-content');
-            let seriesHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-series" class="${neutralBtnClasses}">全選</button><button id="cobra-clear-all-series" class="${neutralBtnClasses}">全部清除</button></div><div id="cobra-series-multiselect" class="multiselect-container space-y-1">`;
+            let seriesHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-series" class="${neutralBtnClasses}">Select All</button><button id="cobra-clear-all-series" class="${neutralBtnClasses}">Clear All</button></div><div id="cobra-series-multiselect" class="multiselect-container space-y-1">`;
             data.seriesNames.forEach(name => {
                 seriesHtml += `<label class="flex items-center cursor-pointer"><input type="checkbox" name="cobra_series" value="${name}" class="mr-2 bg-slate-700 accent-[var(--accent-blue)]" checked><span>${name}</span></label>`;
             });
@@ -797,7 +797,7 @@
             document.getElementById('cobra-clear-all-series').onclick = () => document.querySelectorAll('input[name="cobra_series"]').forEach(cb => cb.checked = false);
 
             const icsContainer = document.getElementById('cobra-ics-content');
-            let icsHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-ics" class="${neutralBtnClasses}">全選</button><button id="cobra-clear-all-ics" class="${neutralBtnClasses}">全部清除</button></div><div id="cobra-ics-multiselect" class="multiselect-container space-y-1">`;
+            let icsHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-ics" class="${neutralBtnClasses}">Select All</button><button id="cobra-clear-all-ics" class="${neutralBtnClasses}">Clear All</button></div><div id="cobra-ics-multiselect" class="multiselect-container space-y-1">`;
             data.componentNames.forEach(name => {
                 icsHtml += `<label class="flex items-center cursor-pointer"><input type="checkbox" name="cobra_ics" value="${name}" class="mr-2 bg-slate-700 accent-[var(--accent-blue)]"><span>${name}</span></label>`;
             });
@@ -808,7 +808,7 @@
             document.getElementById('cobra-ics-multiselect').addEventListener('change', updateSpecEditor);
 
             const deltaContainer = document.getElementById('cobra-delta-content');
-            deltaContainer.innerHTML = `<div id="cobra-delta-pairs-container" class="space-y-3"></div><button id="cobra-add-delta-pair" class="mt-4 text-sm bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-2 px-4 rounded-lg w-full transition">新增 ΔT 比較組</button>`;
+            deltaContainer.innerHTML = `<div id="cobra-delta-pairs-container" class="space-y-3"></div><button id="cobra-add-delta-pair" class="mt-4 text-sm bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-2 px-4 rounded-lg w-full transition">Add ΔT Pair</button>`;
             document.getElementById('cobra-add-delta-pair').addEventListener('click', addDeltaPair);
         }
 
@@ -817,7 +817,7 @@
             const container = document.getElementById('cobra-spec-editor-container').querySelector('div');
             
             if (selectedIcs.length === 0) {
-                container.innerHTML = '<p class="p-4 text-center text-slate-500">請選擇關鍵 IC 以輸入規格。</p>';
+                container.innerHTML = '<p class="p-4 text-center text-slate-500">Select Key ICs to input specifications.</p>';
                 return;
             }
             
@@ -826,7 +826,7 @@
             if (!table) {
                 container.innerHTML = `<table id="${tableId}" class="data-editor-table"></table>`;
                 table = document.getElementById(tableId);
-                table.innerHTML = `<thead><tr><th>元件</th><th>規格類型</th><th>Tj (°C)</th><th>Rjc (°C/W)</th><th>Pd (W)</th><th>Ta 上限 (°C)</th></tr></thead><tbody></tbody>`;
+                table.innerHTML = `<thead><tr><th>Component</th><th>Spec Type</th><th>Tj (°C)</th><th>Rjc (°C/W)</th><th>Pd (W)</th><th>Ta Limit (°C)</th></tr></thead><tbody></tbody>`;
             }
 
             const tbody = table.querySelector('tbody');
@@ -837,12 +837,12 @@
                     const row = tbody.insertRow();
                     row.dataset.ic = ic;
                     row.innerHTML = `
-                        <td data-label="元件">${ic}</td>
-                        <td data-label="規格類型"><select class="spec-type-select"><option value="Tc" selected>Tc</option><option value="Tj">Tj</option><option value="Ta">Ta</option></select></td>
+                        <td data-label="Component">${ic}</td>
+                        <td data-label="Spec Type"><select class="spec-type-select"><option value="Tc" selected>Tc</option><option value="Tj">Tj</option><option value="Ta">Ta</option></select></td>
                         <td data-label="Tj (°C)"><input type="number" class="spec-tj" step="0.1"></td>
                         <td data-label="Rjc (°C/W)"><input type="number" class="spec-rjc" step="0.1"></td>
                         <td data-label="Pd (W)"><input type="number" class="spec-pd" step="0.1"></td>
-                        <td data-label="Ta 上限 (°C)"><input type="number" class="spec-ta" step="0.1"></td>
+                        <td data-label="Ta Limit (°C)"><input type="number" class="spec-ta" step="0.1"></td>
                     `;
                 }
             }
@@ -893,7 +893,7 @@
         // Helper functions to clean data from Excel
         function cleanSeriesHeader(rawHeader) {
             let tempName = (rawHeader || '').toString().trim();
-            if (!tempName) return "未命名組態";
+            if (!tempName) return "Unnamed Series";
             if (['DEFAULT', 'BASELINE'].includes(tempName.toUpperCase())) return tempName.charAt(0).toUpperCase() + tempName.slice(1).toLowerCase();
             let bracketMatch = tempName.match(/\[(.*?)\]/);
             if (bracketMatch) {
@@ -906,23 +906,23 @@
             const patterns = [/Temperature \(Solid\) Max.*/i, /\[°C\]/gi, /\(°C\)/gi, /°C/gi, /PoE mode_battery.*/i, /k=10.*/i];
             patterns.forEach(p => tempName = tempName.replace(p, "").trim());
             tempName = tempName.replace(/_/g, " ").replace(/\s+/g, " ").trim();
-            return tempName || "未命名組態";
+            return tempName || "Unnamed Series";
         }
         function cleanComponentDisplayName(rawName) {
             let name = (rawName || '').toString().trim();
-            if (!name) return "未命名元件";
+            if (!name) return "Unnamed Component";
             name = name.replace(/^VG\s+/i, "");
             const suffixes = [/Temperature \(Solid\) Max.*/i, /Max \[°C\]/i, /\[°C\]/gi, /\(°C\)/gi, /°C/gi];
             suffixes.forEach(s => name = name.replace(s, "").trim());
             name = name.replace(/-\s*[\d\.\*\s\+\-/xX]+W/i, "").trim();
             name = name.replace(/[\s_-]+$/, "").trim();
             name = name.replace(/[\s_]+/g, " ").trim();
-            return name || "未命名元件";
+            return name || "Unnamed Component";
         }
 
         // Pre-analyzes the uploaded Excel file to extract series and component names
         function cobraPreStudy(workbook) {
-            if (!workbook.SheetNames.length) return { error: "Excel 檔案中沒有工作表。" };
+            if (!workbook.SheetNames.length) return { error: "Excel file contains no sheets." };
             const targetSheetName = workbook.SheetNames[workbook.SheetNames.length - 1];
             const sheet = workbook.Sheets[targetSheetName];
             const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
@@ -938,7 +938,7 @@
                 }
                 if (headerRowIdx !== -1) break;
             }
-            if (headerRowIdx === -1) return { error: "在最後一個工作表的前20行中找不到包含 'Goal' 的標頭。" };
+            if (headerRowIdx === -1) return { error: "Could not find a header containing 'Goal' in the first 20 rows of the last sheet." };
             
             const headerRow = jsonSheet[headerRowIdx];
             const firstSeriesColIdx = componentColIdx + 1;
@@ -968,11 +968,11 @@
         // Runs the main analysis based on user selections
         function runCobraAnalysis() {
             loader.classList.remove('hidden');
-            loaderText.textContent = '分析系統脈動中...';
+            loaderText.textContent = 'Analyzing System Pulse...';
             try {
                 const selectedSeries = Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value);
                 const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
-                if (selectedSeries.length === 0 || selectedIcs.length === 0) throw new Error("請至少選擇一個測試組態和一個關鍵 IC。");
+                if (selectedSeries.length === 0 || selectedIcs.length === 0) throw new Error("Please select at least one configuration and one Key IC.");
 
                 const specData = [];
                 document.querySelectorAll('#cobra-spec-table tbody tr').forEach(row => {
@@ -1012,7 +1012,7 @@
                         tableData.push({ Component: ic, ...temps });
                     }
                 });
-                if (tableData.length === 0) throw new Error("找不到所選關鍵 IC 的資料。");
+                if (tableData.length === 0) throw new Error("No data found for the selected Key ICs.");
 
                 const results = {}, conclusionData = [];
                 specData.forEach(specRow => {
@@ -1027,7 +1027,7 @@
                             if (effectiveSpec !== null) specInputs = `Tj Max: ${specRow['Tj (°C)']}`;
                         } else if (specType === 'Ta') {
                             effectiveSpec = specRow['Ta Limit (°C)'];
-                            if (effectiveSpec !== null) specInputs = `Ta 上限: ${specRow['Ta Limit (°C)']}`;
+                            if (effectiveSpec !== null) specInputs = `Ta Limit: ${specRow['Ta Limit (°C)']}`;
                         }
                     } catch(e) {/* ignore */}
                     const icResult = { spec: effectiveSpec, result: "N/A", spec_type: specType, spec_inputs: specInputs, series_results: [] };
@@ -1065,12 +1065,12 @@
                     }
                 });
                 const finalTableData = displayTable.map(row => {
-                    const newRow = { '元件': row.Component };
-                    if (row['Spec (°C)'] !== undefined) newRow['規格 (°C)'] = row['Spec (°C)'];
+                    const newRow = { 'Component': row.Component };
+                    if (row['Spec (°C)'] !== undefined) newRow['Spec (°C)'] = row['Spec (°C)'];
                     selectedSeries.forEach(s => newRow[s + ' (°C)'] = row[s]);
                     const deltaCols = Object.keys(row).filter(k => k.startsWith('ΔT'));
                     deltaCols.sort().forEach(k => newRow[k] = row[k]);
-                    if (row['Result'] !== undefined) newRow['結果'] = row['Result'];
+                    if (row['Result'] !== undefined) newRow['Result'] = row['Result'];
                     return newRow;
                 });
                 
@@ -1079,7 +1079,7 @@
                 document.getElementById('cobra-results-area').classList.remove('hidden');
 
             } catch (err) {
-                showMessage(`分析錯誤: ${err.message}`, 'error');
+                showMessage(`Analysis Error: ${err.message}`, 'error');
             } finally {
                 loader.classList.add('hidden');
             }
@@ -1095,30 +1095,30 @@
         function renderCobraConclusions(data) {
             const container = document.getElementById('cobra-conclusions-content');
             if (!data || data.length === 0) {
-                container.innerHTML = `<p class="text-slate-400">沒有結論資料可顯示。</p>`;
+                container.innerHTML = `<p class="text-slate-400">No conclusion data to display.</p>`;
                 return;
             }
             const failedIcs = data.filter(item => item.result === 'FAIL').map(item => item.component);
             let summaryHtml;
             if (failedIcs.length > 0) {
-                summaryHtml = `<h3 class="text-xl font-bold mb-4">總結</h3><p><strong>結果: <span class="text-[var(--accent-red)]">不合格</span></strong> - 以下元件超出溫度限制: <strong>${failedIcs.join(', ')}</strong></p>`;
+                summaryHtml = `<h3 class="text-xl font-bold mb-4">Executive Summary</h3><p><strong>Result: <span class="text-[var(--accent-red)]">FAIL</span></strong> - The following components exceeded thermal limits: <strong>${failedIcs.join(', ')}</strong></p>`;
             } else {
-                summaryHtml = `<h3 class="text-xl font-bold mb-4">總結</h3><p><strong>結果: <span class="text-[var(--accent-green)]">合格</span></strong> - 所有選擇的關鍵 IC 均在其指定的溫度限制內。</p>`;
+                summaryHtml = `<h3 class="text-xl font-bold mb-4">Executive Summary</h3><p><strong>Result: <span class="text-[var(--accent-green)]">PASS</span></strong> - All selected Key ICs are within their specified thermal limits.</p>`;
             }
             summaryHtml += '<hr class="border-[var(--border-color)] my-4">';
-            summaryHtml += '<h3 class="text-xl font-bold mb-4">詳細元件分析</h3>';
+            summaryHtml += '<h3 class="text-xl font-bold mb-4">Detailed Component Analysis</h3>';
             data.forEach(item => {
                 const resultText = item.result;
                 const statusEmoji = resultText === 'FAIL' ? '🔴' : resultText === 'PASS' ? '🟢' : '⚪️';
                 const specVal = !isNaN(item.spec) ? `${item.spec.toFixed(1)}°C` : 'N/A';
                 summaryHtml += `<div class="mb-4 p-4 bg-[var(--bg-dark)] rounded-lg">
-                    <h4 class="font-bold text-lg">${item.component} — 結果: ${statusEmoji} ${resultText}</h4>
+                    <h4 class="font-bold text-lg">${item.component} — Result: ${statusEmoji} ${resultText}</h4>
                     <div class="text-sm text-slate-400 mt-2 space-y-1">
-                        <p><strong>規格類型:</strong> <code>${item.spec_type}</code></p>
-                        <p><strong>計算規格上限:</strong> <code>${specVal}</code></p>
-                        <p><strong>規格輸入:</strong> <code>${item.spec_inputs}</code></p>
+                        <p><strong>Specification Type:</strong> <code>${item.spec_type}</code></p>
+                        <p><strong>Calculated Spec Limit:</strong> <code>${specVal}</code></p>
+                        <p><strong>Specification Inputs:</strong> <code>${item.spec_inputs}</code></p>
                     </div>
-                    <p class="mt-3 font-semibold text-slate-300">各組態表現:</p>
+                    <p class="mt-3 font-semibold text-slate-300">Performance per Configuration:</p>
                     <table class="w-full text-sm mt-1">`;
                 item.series_results.forEach(res => {
                     const tempText = res.temp !== null && !isNaN(res.temp) ? res.temp.toFixed(1) : "N/A";
@@ -1133,13 +1133,13 @@
         function renderCobraTable(data) {
             const container = document.getElementById('cobra-table-content');
             if (!data || data.length === 0) {
-                container.innerHTML = `<p class="text-slate-400">沒有表格資料可顯示。</p>`;
+                container.innerHTML = `<p class="text-slate-400">No table data to display.</p>`;
                 return;
             }
             container.innerHTML = `<div id="cobra-table-render" class="overflow-x-auto p-2 bg-white"></div>
                 <div class="mt-6 flex flex-col sm:flex-row gap-4">
-                    <button id="cobra-download-png" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">下載為 PNG</button>
-                    <button id="cobra-download-excel" class="flex-1 bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">下載為格式化 Excel</button>
+                    <button id="cobra-download-png" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">Download as PNG</button>
+                    <button id="cobra-download-excel" class="flex-1 bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">Download as Formatted Excel</button>
                 </div>`;
 
             const tableContainer = document.getElementById('cobra-table-render');
@@ -1171,7 +1171,7 @@
                     td.textContent = cellValue;
                     td.style.padding = '10px'; td.style.border = '1px solid #ccc'; td.style.textAlign = 'center';
                     td.style.backgroundColor = '#f2f2f2'; td.style.color = '#333'; td.style.whiteSpace = 'nowrap';
-                    if (h === '結果') {
+                    if (h === 'Result') {
                         if (cellValue === 'PASS') { td.style.backgroundColor = '#C6EFCE'; td.style.color = '#006100'; }
                         if (cellValue === 'FAIL') { td.style.backgroundColor = '#FFC7CE'; td.style.color = '#9C0006'; }
                     }
@@ -1192,7 +1192,7 @@
         function downloadCobraExcel() {
             const tableData = cobraState.analysisResults.tableData;
             if (!tableData || tableData.length === 0) {
-                showMessage("沒有可匯出的資料。", "error"); return;
+                showMessage("No data to export.", "error"); return;
             }
             const wb = XLSX.utils.book_new(); const ws = {};
             const headers = Object.keys(tableData[0]);
@@ -1220,8 +1220,8 @@
                         if (!isNaN(numVal) && value.trim() === numVal.toString()) { cell.v = numVal; cell.t = 'n'; }
                         else { cell.v = value; cell.t = 's'; }
                     }
-                    let style = (header === '元件') ? componentCellStyle : defaultCellStyle;
-                    if (header === '結果') {
+                    let style = (header === 'Component') ? componentCellStyle : defaultCellStyle;
+                    if (header === 'Result') {
                         if (cell.v === 'PASS') style = passStyle;
                         else if (cell.v === 'FAIL') style = failStyle;
                     }
@@ -1231,9 +1231,9 @@
                 });
             });
             ws['!cols'] = headers.map(h => {
-                if (h === '元件') return { wch: 30 };
-                if (h === '規格 (°C)') return { wch: 15 };
-                if (h === '結果') return { wch: 10 };
+                if (h === 'Component') return { wch: 30 };
+                if (h === 'Spec (°C)') return { wch: 15 };
+                if (h === 'Result') return { wch: 10 };
                 if (h.includes('°C') || h.includes('ΔT')) return { wch: 20 };
                 return { wch: 15 };
             });
@@ -1241,12 +1241,12 @@
             ws['!ref'] = XLSX.utils.encode_range(range);
             XLSX.utils.book_append_sheet(wb, ws, "ThermalTableData");
             XLSX.writeFile(wb, "cobra_results_formatted.xlsx");
-            showMessage("已下載格式化的 Excel 檔案。", "success");
+            showMessage("Formatted Excel file has been downloaded.", "success");
         }
 
         function renderCobraChart(data, selectedSeries) {
             const container = document.getElementById('cobra-chart-content');
-            container.innerHTML = '<canvas id="cobra-chart-canvas"></canvas><div class="mt-6"><button id="cobra-download-chart" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">下載圖表為 PNG</button></div>';
+            container.innerHTML = '<canvas id="cobra-chart-canvas"></canvas><div class="mt-6"><button id="cobra-download-chart" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">Download Chart as PNG</button></div>';
             
             if (cobraState.chartInstance) cobraState.chartInstance.destroy();
 
@@ -1279,11 +1279,11 @@
                     responsive: true, maintainAspectRatio: false,
                     layout: { padding: { top: 30 } },
                     scales: {
-                        y: { beginAtZero: true, title: { display: true, text: '溫度 (°C)', color: '#111' }, grid: { color: '#e0e0e0' }, ticks: { color: '#666'} },
+                        y: { beginAtZero: true, title: { display: true, text: 'Temperature (°C)', color: '#111' }, grid: { color: '#e0e0e0' }, ticks: { color: '#666'} },
                         x: { grid: { display: false }, ticks: { color: '#666'} }
                     },
                     plugins: {
-                        title: { display: true, text: '關鍵 IC 溫度比較', color: '#111', font: {size: 16, weight: 'bold'} },
+                        title: { display: true, text: 'Key IC Temperature Comparison', color: '#111', font: {size: 16, weight: 'bold'} },
                         legend: { position: 'bottom', labels: { color: '#333' } },
                         datalabels: {
                             anchor: 'end', align: 'top', color: '#444', font: { weight: 'bold' },
