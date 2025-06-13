@@ -507,59 +507,59 @@
             const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
             const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
             viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
-                                    <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
-                                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
-                                </div>
-                                <div id="viper-tabs" class="st-tabs-container">
-                                    <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
-                                    <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
-                                    <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
-                                </div>
-                                <div id="nat-conv-content" class="st-tab-content active">
-                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
-                                    <div class="grid md:grid-cols-2 gap-8">
-                                        <div class="space-y-6">
-                                            <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
-                                            <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
-                                            <div>
-                                                <label class="${labelClasses}">Product Dimensions (mm)</label>
-                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                    <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
-                                                    <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
-                                                    <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
+                                        <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
+                                        <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
+                                    </div>
+                                    <div id="viper-tabs" class="st-tabs-container">
+                                        <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
+                                        <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
+                                        <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
+                                    </div>
+                                    <div id="nat-conv-content" class="st-tab-content active">
+                                        <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
+                                        <div class="grid md:grid-cols-2 gap-8">
+                                            <div class="space-y-6">
+                                                <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
+                                                <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
+                                                <div>
+                                                    <label class="${labelClasses}">Product Dimensions (mm)</label>
+                                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                        <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
+                                                        <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
+                                                        <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
+                                                        <input type="number" id="nc_ta" value="25" class="${inputClasses}">
+                                                    </div>
+                                                    <div>
+                                                         <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
+                                                         <input type="number" id="nc_ts" value="50" class="${inputClasses}">
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
-                                                    <input type="number" id="nc_ta" value="25" class="${inputClasses}">
-                                                </div>
-                                                <div>
-                                                     <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
-                                                     <input type="number" id="nc_ts" value="50" class="${inputClasses}">
-                                                </div>
+                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
+                                                <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
+                                                <div id="nc-results" class="space-y-4"></div>
                                             </div>
                                         </div>
-                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
-                                            <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
-                                            <div id="nc-results" class="space-y-4"></div>
+                                    </div>
+                                    <div id="force-conv-content" class="st-tab-content">
+                                        <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
+                                        <div class="grid md:grid-cols-2 gap-8">
+                                            <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
+                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
                                         </div>
                                     </div>
-                                </div>
-                                <div id="force-conv-content" class="st-tab-content">
-                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
-                                    <div class="grid md:grid-cols-2 gap-8">
-                                        <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
-                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
-                                    </div>
-                                </div>
-                                <div id="solar-rad-content" class="st-tab-content">
-                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
-                                    <div class="grid md:grid-cols-2 gap-8">
-                                        <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
-                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
-                                    </div>
-                                </div>`;
+                                    <div id="solar-rad-content" class="st-tab-content">
+                                        <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
+                                        <div class="grid md:grid-cols-2 gap-8">
+                                            <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
+                                            <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
+                                        </div>
+                                    </div>`;
             setupViperEventListeners();
         }
         
@@ -839,6 +839,7 @@
                 if (!existingIcs.includes(ic)) {
                     const row = tbody.insertRow();
                     row.dataset.ic = ic;
+                    // FIX: Removed inline style="display:none;" from the Ta Limit input
                     row.innerHTML = `
                         <td data-label="Component">${ic}</td>
                         <td data-label="Spec Type">
@@ -851,7 +852,7 @@
                         <td data-label="Tj (°C)"><input type="number" class="spec-tj" step="0.1"></td>
                         <td data-label="Rjc (°C/W)"><input type="number" class="spec-rjc" step="0.1"></td>
                         <td data-label="Pd (W)"><input type="number" class="spec-pd" step="0.1"></td>
-                        <td data-label="Ta Limit (°C)"><input type="number" class="spec-ta" step="0.1" style="display:none;"></td>
+                        <td data-label="Ta Limit (°C)"><input type="number" class="spec-ta" step="0.1"></td>
                     `;
                 }
             }
@@ -976,7 +977,7 @@
             const seriesExcelIndices = {};
             headerRow.forEach((name, i) => {
                  if (i >= firstSeriesColIdx && rawSeriesNames.includes(name)) {
-                    seriesExcelIndices[name] = i;
+                     seriesExcelIndices[name] = i;
                 }
             });
 
@@ -1284,10 +1285,10 @@
 
         function downloadTableAsPNG(){
              html2canvas(document.getElementById('cobra-table-render').querySelector('table')).then(canvas => {
-                 const a = document.createElement('a');
-                 a.href = canvas.toDataURL('image/png');
-                 a.download = 'cobra-table.png';
-                 a.click();
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'cobra-table.png';
+                a.click();
              });
         }
 
@@ -1333,8 +1334,8 @@
                              cell.v = numVal;
                              cell.t = 'n';
                         } else {
-                            cell.v = value;
-                            cell.t = 's';
+                             cell.v = value;
+                             cell.t = 's';
                         }
                     }
 
