@@ -283,6 +283,7 @@
 
         // Function to switch between different views
         function showView(viewName) {
+            window.scrollTo(0, 0); // Scroll to top on every view change
             Object.keys(views).forEach(key => views[key].classList.toggle('hidden', key !== viewName));
             appWrapper.classList.remove('hidden');
             if (viewName === 'auth' || viewName === 'register') {
@@ -457,7 +458,7 @@
                     const userId = target.dataset.id;
                     const isActive = target.dataset.active === 'true';
 
-                    if (userId === auth.currentUser?.uid && isActive) { 
+                    if (auth.currentUser && userId === auth.currentUser.uid && isActive) { 
                         showMessage("You cannot deactivate your own account.", "error"); 
                         return; 
                     }
