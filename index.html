@@ -32,7 +32,6 @@
             color: var(--text-primary);
         }
         .view { transition: opacity 0.3s ease-in-out; }
-        /* --- FIX: Added !important to ensure this class always hides the element --- */
         .hidden { display: none !important; }
         #message-box {
             position: fixed; top: 20px; right: 20px; padding: 1rem; border-radius: 0.5rem; color: white;
@@ -572,7 +571,7 @@
                                                         <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
                                                     </div>
                                                 </div>
-                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
                                                         <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
                                                         <input type="number" id="nc_ta" value="25" class="${inputClasses}">
