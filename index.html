@@ -150,7 +150,7 @@
                         <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Report Generator
                     </a>
-                    </nav>
+                </nav>
                 <div class="mt-auto">
                     <p class="text-sm text-slate-400 truncate mb-4" id="user-email-display"></p>
                     <button id="admin-panel-button" class="hidden w-full mt-2 bg-amber-500/80 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Admin Panel</button>
@@ -165,17 +165,18 @@
                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <h1 id="mobile-tool-title" class="text-xl font-bold">Cobra</h1>
-                    <div></div>
+                    <div><!-- Spacer --></div>
                 </header>
                 
                 <div id="cobra-ui" class="tool-ui hidden"></div>
                 <div id="viper-ui" class="tool-ui hidden"></div>
                 <div id="reportgen-ui" class="tool-ui hidden"></div>
-                </main>
+            </main>
         </div>
 
         <div id="admin-panel-view" class="view hidden p-4 md:p-10" style="background-color: var(--bg-dark);">
-            </div>
+            <!-- Admin panel content... -->
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -223,11 +224,11 @@
                 apiKey: "AIzaSyC104s4ck9kSwREUvuE9chFaSokBPBWdwU",
                 authDomain: "thermal-engineering-67354.firebaseapp.com",
                 projectId: "thermal-engineering-67354",
-                storageBucket: "thermal-engineering-67354.firebasestorage.app",
+                storageBucket: "thermal-engineering-67354.appspot.com",
                 messagingSenderId: "407236469979",
                 appId: "1:407236469979:web:53ce41f79b2d5b6721d8fe",
                 measurementId: "G-9HKXSTC6LE"
-                };
+            };
 
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
                 loaderText.textContent = 'Error: Firebase configuration is missing.';
@@ -267,48 +268,64 @@
 
         // Check user status and fetch their data from Firestore
         async function checkUserStatusAndData(user) {
-            // This is your existing function to check user data from Firestore
-            // For this example, we'll simulate a successful login and proceed.
-            initializeSercommSuite(user);
-            showView('main');
+            const userDocRef = db.collection("users").doc(user.uid);
+            try {
+                const docSnap = await userDocRef.get();
+                if (docSnap.exists && docSnap.data().isActive) {
+                    currentUserData = { uid: user.uid, ...docSnap.data() };
+                    initializeSercommSuite(currentUserData);
+                    showView('main');
+                } else {
+                    showMessage("Account is pending approval or has been deactivated.", "info");
+                    auth.signOut();
+                }
+            } catch (error) { 
+                console.error("Error fetching user data:", error); 
+                showMessage("Error reading user data.", "error"); 
+                auth.signOut(); 
+            }
         }
 
         // Handles login and registration form submissions
         function setupFormEventListeners() {
-            // Your existing login/registration form listeners...
-            document.getElementById('login-form')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                // Simulate login
-                initializeSercommSuite({email: 'test@sercomm.com'});
-                showView('main');
+            document.getElementById('login-form')?.addEventListener('submit', async (e) => { 
+                e.preventDefault(); 
+                loader.classList.remove('hidden'); 
+                try { 
+                    await auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value); 
+                } catch (error) { 
+                    showMessage("Login failed. Please check your credentials.", "error"); 
+                    loader.classList.add('hidden'); 
+                } 
+            });
+            document.getElementById('register-form')?.addEventListener('submit', async (e) => {
+                // Full registration logic...
             });
         }
         
         // Handles global click events for navigation and actions
         function setupGlobalEventListeners() {
-            // Your existing global event listeners...
+            // Full global event listener logic...
         }
         
         // Sets up event listeners for mobile navigation
         function setupMobileNavEventListeners() {
-            // Your existing mobile nav listeners...
+            // Full mobile nav listener logic...
         }
 
         // Listens for real-time updates to the user list for the admin panel
         function listenForUserUpdates() {
-            // Your existing Firestore listener for the admin panel...
+            // Full admin panel listener logic...
         }
 
         // Initializes the main application UI
         function initializeSercommSuite(user) {
             document.getElementById('user-email-display').textContent = user.email;
             
-            // Render all tool UIs
-            renderCobraUI();
             renderViperUI();
-            renderReportGenUI(); // ▼▼▼ NEW JAVASCRIPT ▼▼▼
+            renderCobraUI();
+            renderReportGenUI();
 
-            // Setup tool selection logic
             const mobileToolTitle = document.getElementById('mobile-tool-title');
             document.querySelectorAll('.tool-selector').forEach(selector => {
                 selector.addEventListener('click', (e) => {
@@ -325,25 +342,769 @@
             document.getElementById('tool-cobra').click(); 
         }
         
-        // Renders the Viper tool UI
+        // Cobra tool specific state and functions
+        const cobraState = {};
+
+        // ▼▼▼ RESTORED COBRA AND VIPER FUNCTIONS ▼▼▼
+
         function renderViperUI() {
-            // Your existing function to render the Viper UI...
-            document.getElementById('viper-ui').innerHTML = '<h1 class="text-2xl font-bold">Viper Tool UI</h1>';
+            const viperUI = document.getElementById('viper-ui');
+            const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
+            const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
+            viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                                     <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
+                                     <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
+                                 </div>
+                                 <div id="viper-tabs" class="st-tabs-container">
+                                     <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
+                                     <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
+                                     <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
+                                 </div>
+                                 <div id="nat-conv-content" class="st-tab-content active">
+                                     <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
+                                     <div class="grid md:grid-cols-2 gap-8">
+                                         <div class="space-y-6">
+                                             <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
+                                             <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
+                                             <div>
+                                                 <label class="${labelClasses}">Product Dimensions (mm)</label>
+                                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                     <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
+                                                     <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
+                                                     <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
+                                                 </div>
+                                             </div>
+                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                 <div>
+                                                     <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
+                                                     <input type="number" id="nc_ta" value="25" class="${inputClasses}">
+                                                 </div>
+                                                 <div>
+                                                      <label for="nc_ts" class="${labelClasses}">Max. Surface Temp. (°C)</label>
+                                                      <input type="number" id="nc_ts" value="50" class="${inputClasses}">
+                                                 </div>
+                                             </div>
+                                         </div>
+                                         <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
+                                             <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
+                                             <div id="nc-results" class="space-y-4"></div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div id="force-conv-content" class="st-tab-content">
+                                     <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
+                                     <div class="grid md:grid-cols-2 gap-8">
+                                         <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
+                                         <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
+                                     </div>
+                                 </div>
+                                 <div id="solar-rad-content" class="st-tab-content">
+                                     <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
+                                     <div class="grid md:grid-cols-2 gap-8">
+                                         <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
+                                         <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
+                                     </div>
+                                 </div>`;
+            setupViperEventListeners();
         }
         
-        // Cobra tool specific state and functions
-        const cobraState = {}; // Your existing Cobra state object
+        function setupViperEventListeners() {
+            const tabs = document.querySelectorAll('#viper-tabs .st-tab');
+            const contents = document.querySelectorAll('#viper-ui .st-tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const targetId = tab.dataset.tab + '-content';
+                    contents.forEach(c => c.classList.toggle('active', c.id === targetId));
+                });
+            });
+            ['nc_mat', 'nc_l', 'nc_w', 'nc_h', 'nc_ta', 'nc_ts'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplayNC));
+            ['fc_power_q', 'fc_tin', 'fc_tout'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplayFC));
+            ['solar_mat', 'solar_alpha_custom', 'solar_area', 'solar_irradiance'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplaySolar));
+            document.getElementById('solar_mat').addEventListener('change', (e) => { document.getElementById('solar_alpha_custom').classList.toggle('hidden', e.target.value !== 'custom'); });
+            calculateAndDisplayNC(); calculateAndDisplayFC(); calculateAndDisplaySolar();
+        }
+
+        function calculateAndDisplayNC() {
+            const materials = { "Plastic (ABS/PC)": {emissivity: 0.90, k_uniform: 0.65}, "Aluminum (Anodized)": {emissivity: 0.85, k_uniform: 0.90} };
+            const [L, W, H, Ta, Ts_peak] = ['nc_l', 'nc_w', 'nc_h', 'nc_ta', 'nc_ts'].map(id => parseFloat(document.getElementById(id).value));
+            const material_props = materials[document.getElementById('nc_mat').value];
+            const resultsDiv = document.getElementById('nc-results');
+            if (Ts_peak <= Ta) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Max. Surface Temp (Ts) must be higher than Ambient Temp (Ta).</p>`; return; }
+            if (L <= 0 || W <= 0 || H <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Product dimensions (L, W, H) must be greater than zero.</p>`; return; }
+            const STEFAN_BOLTZMANN_CONST = 5.67e-8, EPSILON = 1e-9, BUILT_IN_SAFETY_FACTOR = 0.9, { emissivity, k_uniform } = material_props;
+            const Ts_eff = Ta + (Ts_peak - Ta) * k_uniform, delta_T_eff = Ts_eff - Ta, [L_m, W_m, H_m] = [L/1000, W/1000, H/1000];
+            const A_total = 2 * (L_m*W_m + L_m*H_m + W_m*H_m), T_film = (Ts_eff + Ta) / 2, [k_air, nu_air, pr_air, g] = [0.0275, 1.85e-5, 0.72, 9.81];
+            const beta = 1 / (T_film + 273.15 + EPSILON), Lc_vert = H_m, Lc_horiz = (L_m * W_m) / (2 * (L_m + W_m) + EPSILON);
+            const Ra_vert = (g*beta*delta_T_eff*Lc_vert**3)/(nu_air**2)*pr_air, Ra_horiz = (g*beta*delta_T_eff*Lc_horiz**3)/(nu_air**2)*pr_air;
+            const Nu_vert = (0.825 + (0.387 * Math.abs(Ra_vert)**(1/6)) / (1 + (0.492/pr_air)**(9/16))**(8/27))**2;
+            let Nu_top = 1.0; if (Ra_horiz >= 1e4 && Ra_horiz <= 1e7) Nu_top = 0.54 * Ra_horiz**(1/4); else if (Ra_horiz > 1e7) Nu_top = 0.15 * Ra_horiz**(1/3);
+            const Nu_bottom = 0.27 * Math.abs(Ra_horiz)**(1/4);
+            const h_vert = (Nu_vert*k_air)/(Lc_vert+EPSILON), h_top = (Nu_top*k_air)/(Lc_horiz+EPSILON), h_bottom = (Nu_bottom*k_air)/(Lc_horiz+EPSILON);
+            const Q_conv_total = ((h_top*L_m*W_m)+(h_bottom*L_m*W_m)+h_vert*2*(L_m*H_m+W_m*H_m))*delta_T_eff;
+            const Ts_eff_K = Ts_eff + 273.15, Ta_K = Ta + 273.15, Q_rad = emissivity * STEFAN_BOLTZMANN_CONST * A_total * (Ts_eff_K**4 - Ta_K**4);
+            const Q_final = (Q_conv_total + Q_rad) * BUILT_IN_SAFETY_FACTOR;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">📐 Surface Area</p><p class="text-2xl font-bold">${A_total.toFixed(4)} m²</p></div><div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">✅ Max. Dissipatable Power</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${Q_final.toFixed(1)} W</p><p class="text-xs text-slate-500 mt-1">Includes material uniformity and a fixed engineering safety factor (0.9).</p></div>`;
+        }
+        function calculateAndDisplayFC() {
+            const [power_q, T_in, T_out] = ['fc_power_q', 'fc_tin', 'fc_tout'].map(id => parseFloat(document.getElementById(id).value));
+            const resultsDiv = document.getElementById('fc-results');
+            if (T_out <= T_in) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Outlet Temperature must be higher than Inlet Temperature.</p>`; return; }
+            if (power_q <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Power to be dissipated must be greater than zero.</p>`; return; }
+            const AIR_SPECIFIC_HEAT_CP = 1006, AIR_DENSITY_RHO = 1.225, M3S_TO_CFM_CONVERSION = 2118.88;
+            const delta_T = T_out - T_in, mass_flow_rate = power_q / (AIR_SPECIFIC_HEAT_CP * delta_T);
+            const volume_flow_rate_m3s = mass_flow_rate / AIR_DENSITY_RHO, cfm = volume_flow_rate_m3s * M3S_TO_CFM_CONVERSION;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">🌬️ Required Airflow</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${cfm.toFixed(1)} CFM</p><p class="text-xs text-slate-500 mt-1">CFM: Cubic Feet per Minute.</p></div>`;
+        }
+        function calculateAndDisplaySolar() {
+            const matSelect = document.getElementById('solar_mat'); let alpha = parseFloat(matSelect.value);
+            if (matSelect.value === 'custom') alpha = parseFloat(document.getElementById('solar_alpha_custom').value) || 0;
+            const [projected_area_mm2, solar_irradiance] = ['solar_area', 'solar_irradiance'].map(id => parseFloat(document.getElementById(id).value));
+            const resultsDiv = document.getElementById('solar-results');
+            if (projected_area_mm2 <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Projected Surface Area must be greater than zero.</p>`; return; }
+            const projected_area_m2 = projected_area_mm2 / 1_000_000, solar_gain = alpha * projected_area_m2 * solar_irradiance;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">☀️ Absorbed Solar Heat Gain</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${solar_gain.toFixed(1)} W</p></div>`;
+        }
 
         function renderCobraUI() {
-            // Your existing function to render the Cobra UI...
-            document.getElementById('cobra-ui').innerHTML = '<h1 class="text-2xl font-bold">Cobra Tool UI</h1><p>Cobra analysis results will be used by the Report Generator.</p>';
+            const cobraUI = document.getElementById('cobra-ui');
+            const primaryBtnClasses = "w-full text-white font-bold py-2 px-4 rounded-lg text-sm transition bg-[var(--accent-blue)] hover:bg-blue-600";
+            const secondaryBtnClasses = "w-full text-white font-bold py-2 px-4 rounded-lg text-sm transition bg-[var(--accent-red)] hover:bg-red-500";
+            cobraUI.innerHTML = `
+                <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                    <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 95 C 20 95, 10 75, 25 60 C 35 50, 65 50, 75 60 C 90 75, 80 95, 60 95 L 40 95 Z" fill="#2C7873"/><path d="M50 70 C 25 70, 25 40, 50 20 C 75 40, 75 70, 50 70 Z" fill="#4A938E" stroke="#FFFFFF" stroke-width="2"/><path d="M50 20 C 40 30, 40 50, 50 60 C 60 50, 60 30, 50 20" fill="#1E1E1E"/><circle cx="46" cy="45" r="4" fill="red"/><circle cx="54" cy="45" r="4" fill="red"/><path d="M48 62 L52 62 L50 70 Z" fill="#FFD700"/></svg></div>
+                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Transformation & Analysis</p></div>
+                </div>
+                <div class="space-y-12">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                        <div class="space-y-6 md:space-y-8">
+                            <h3 class="text-lg md:text-xl font-semibold">1. Upload Excel File</h3>
+                            <div class="flex gap-4">
+                                <label for="cobra-file-uploader" class="flex-grow cursor-pointer ${primaryBtnClasses} text-center">Select File</label>
+                                <input type="file" id="cobra-file-uploader" class="hidden" accept=".xlsx, .xls">
+                                <button id="cobra-remove-file" class="${secondaryBtnClasses}">Remove File</button>
+                            </div>
+                            <p id="cobra-file-name" class="text-sm text-slate-400 mt-3 truncate"></p>
+                        </div>
+                        <div id="cobra-analysis-setup" class="hidden space-y-6">
+                            <h3 class="text-lg md:text-xl font-semibold">2. Analysis Parameters</h3>
+                            <div id="cobra-selection-tabs" class="st-tabs-container">
+                                <button data-tab="series" class="st-tab active">Configurations</button>
+                                <button data-tab="ics" class="st-tab">Key ICs</button>
+                                <button data-tab="delta" class="st-tab">ΔT Comparison</button>
+                            </div>
+                            <div id="cobra-series-content" class="st-tab-content active"></div>
+                            <div id="cobra-ics-content" class="st-tab-content"></div>
+                            <div id="cobra-delta-content" class="st-tab-content"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="cobra-specs-column" class="hidden space-y-6">
+                        <h3 class="text-lg md:text-xl font-semibold">3. Key IC Specification Input</h3>
+                        <div class="bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg p-1">
+                            <div id="cobra-spec-editor-container" class="max-h-[30rem] overflow-y-auto">
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="cobra-run-analysis-container" class="hidden border-t border-[var(--border-color)] my-10 pt-8">
+                    <button id="cobra-run-analysis" class="w-full max-w-xs mx-auto block text-white font-bold py-3 px-4 rounded-lg text-base transition bg-[var(--accent-green)] hover:bg-green-600">🚀 Analyze Selected Data</button>
+                </div>
+
+                <div id="cobra-results-area" class="hidden">
+                    <div class="border-t border-[var(--border-color)] my-10"></div>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-6">Analysis Results</h2>
+                    <div id="cobra-results-tabs" class="st-tabs-container">
+                        <button data-tab="conclusions" class="st-tab active">Conclusions</button>
+                        <button data-tab="table" class="st-tab">Data Table</button>
+                        <button data-tab="chart" class="st-tab">Chart</button>
+                    </div>
+                    <div id="cobra-conclusions-content" class="st-tab-content active bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
+                    <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
+                    <div id="cobra-chart-content" class="st-tab-content bg-white p-4 md:p-6 rounded-lg h-96"></div>
+                </div>
+            `;
+            setupCobraEventListeners();
         }
 
-        // ▼▼▼ START: NEW JAVASCRIPT FUNCTIONS FOR REPORT GENERATOR ▼▼▼
+        function setupCobraEventListeners() {
+            document.getElementById('cobra-file-uploader').addEventListener('change', handleCobraFileUpload);
+            document.getElementById('cobra-remove-file').addEventListener('click', resetCobraState);
+            document.getElementById('cobra-selection-tabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('st-tab')) {
+                    const tabName = e.target.dataset.tab;
+                    document.querySelectorAll('#cobra-selection-tabs .st-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('#cobra-analysis-setup .st-tab-content').forEach(c => c.classList.toggle('active', c.id === `cobra-${tabName}-content`));
+                }
+            });
+            document.getElementById('cobra-results-tabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('st-tab')) {
+                    const tabName = e.target.dataset.tab;
+                    document.querySelectorAll('#cobra-results-tabs .st-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('#cobra-results-area .st-tab-content').forEach(c => c.classList.toggle('active', c.id === `cobra-${tabName}-content`));
+                }
+            });
+            document.getElementById('cobra-run-analysis').addEventListener('click', runCobraAnalysis);
+        }
+
+        function resetCobraState() {
+            document.getElementById('cobra-file-uploader').value = '';
+            document.getElementById('cobra-file-name').textContent = '';
+            document.getElementById('cobra-analysis-setup').classList.add('hidden');
+            document.getElementById('cobra-specs-column').classList.add('hidden');
+            document.getElementById('cobra-run-analysis-container').classList.add('hidden');
+            document.getElementById('cobra-results-area').classList.add('hidden');
+            Object.keys(cobraState).forEach(key => delete cobraState[key]);
+            if (cobraState.chartInstance) {
+                cobraState.chartInstance.destroy();
+                cobraState.chartInstance = null;
+            }
+        }
         
-        /**
-         * Renders the UI for the Report Generator tool.
-         */
+        async function handleCobraFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            resetCobraState();
+            document.getElementById('cobra-file-name').textContent = `File: ${file.name}`;
+            loader.classList.remove('hidden');
+            loaderText.textContent = 'Pre-analyzing Excel file...';
+
+            try {
+                const data = await file.arrayBuffer();
+                cobraState.workbook = XLSX.read(data, {type: 'buffer'});
+                cobraState.prestudyData = cobraPreStudy(cobraState.workbook);
+                if (cobraState.prestudyData.error) throw new Error(cobraState.prestudyData.error);
+                populateCobraControls(cobraState.prestudyData);
+                document.getElementById('cobra-analysis-setup').classList.remove('hidden');
+                document.getElementById('cobra-specs-column').classList.remove('hidden');
+                document.getElementById('cobra-run-analysis-container').classList.remove('hidden');
+            } catch (err) {
+                showMessage(`Error processing file: ${err.message}`, 'error');
+                resetCobraState();
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+        
+        function populateCobraControls(data) {
+            const neutralBtnClasses = "text-xs flex-1 bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-1 px-2 rounded-md transition";
+            const seriesContainer = document.getElementById('cobra-series-content');
+            let seriesHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-series" class="${neutralBtnClasses}">Select All</button><button id="cobra-clear-all-series" class="${neutralBtnClasses}">Clear All</button></div><div id="cobra-series-multiselect" class="multiselect-container space-y-1">`;
+            data.seriesNames.forEach(name => {
+                seriesHtml += `<label class="flex items-center cursor-pointer"><input type="checkbox" name="cobra_series" value="${name}" class="mr-2 bg-slate-700 accent-[var(--accent-blue)]" checked><span>${name}</span></label>`;
+            });
+            seriesHtml += `</div>`;
+            seriesContainer.innerHTML = seriesHtml;
+            document.getElementById('cobra-select-all-series').onclick = () => document.querySelectorAll('input[name="cobra_series"]').forEach(cb => cb.checked = true);
+            document.getElementById('cobra-clear-all-series').onclick = () => document.querySelectorAll('input[name="cobra_series"]').forEach(cb => cb.checked = false);
+
+            const icsContainer = document.getElementById('cobra-ics-content');
+            let icsHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-ics" class="${neutralBtnClasses}">Select All</button><button id="cobra-clear-all-ics" class="${neutralBtnClasses}">Clear All</button></div><div id="cobra-ics-multiselect" class="multiselect-container space-y-1">`;
+            data.componentNames.forEach(name => {
+                icsHtml += `<label class="flex items-center cursor-pointer"><input type="checkbox" name="cobra_ics" value="${name}" class="mr-2 bg-slate-700 accent-[var(--accent-blue)]"><span>${name}</span></label>`;
+            });
+            icsHtml += `</div>`;
+            icsContainer.innerHTML = icsHtml;
+            document.getElementById('cobra-select-all-ics').onclick = () => { document.querySelectorAll('input[name="cobra_ics"]').forEach(cb => cb.checked = true); updateSpecEditor(); };
+            document.getElementById('cobra-clear-all-ics').onclick = () => { document.querySelectorAll('input[name="cobra_ics"]').forEach(cb => cb.checked = false); updateSpecEditor(); };
+            document.getElementById('cobra-ics-multiselect').addEventListener('change', updateSpecEditor);
+
+            const deltaContainer = document.getElementById('cobra-delta-content');
+            deltaContainer.innerHTML = `<div id="cobra-delta-pairs-container" class="space-y-3"></div><button id="cobra-add-delta-pair" class="mt-4 text-sm bg-[var(--bg-lighter)] hover:bg-[var(--border-color)] text-white font-bold py-2 px-4 rounded-lg w-full transition">Add ΔT Pair</button>`;
+            document.getElementById('cobra-add-delta-pair').addEventListener('click', addDeltaPair);
+        }
+
+        function updateSpecEditor() {
+            const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
+            const container = document.getElementById('cobra-spec-editor-container').querySelector('div');
+            
+            if (selectedIcs.length === 0) {
+                container.innerHTML = '<p class="p-4 text-center text-slate-500">Select Key ICs to input specifications.</p>';
+                return;
+            }
+            
+            const tableId = 'cobra-spec-table';
+            let table = document.getElementById(tableId);
+            if (!table) {
+                container.innerHTML = `<table id="${tableId}" class="data-editor-table"></table>`;
+                table = document.getElementById(tableId);
+                table.innerHTML = `<thead><tr><th>Component</th><th>Spec Type</th><th>Tj (°C)</th><th>Rjc (°C/W)</th><th>Pd (W)</th><th>Ta Limit (°C)</th></tr></thead><tbody></tbody>`;
+            }
+
+            const tbody = table.querySelector('tbody');
+            const existingIcs = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset.ic);
+
+            for (const ic of selectedIcs) {
+                if (!existingIcs.includes(ic)) {
+                    const row = tbody.insertRow();
+                    row.dataset.ic = ic;
+                    row.innerHTML = `
+                        <td data-label="Component">${ic}</td>
+                        <td data-label="Spec Type"><select class="spec-type-select"><option value="Tc" selected>Tc</option><option value="Tj">Tj</option><option value="Ta">Ta</option></select></td>
+                        <td data-label="Tj (°C)"><input type="number" class="spec-tj" step="0.1"></td>
+                        <td data-label="Rjc (°C/W)"><input type="number" class="spec-rjc" step="0.1"></td>
+                        <td data-label="Pd (W)"><input type="number" class="spec-pd" step="0.1"></td>
+                        <td data-label="Ta Limit (°C)"><input type="number" class="spec-ta" step="0.1"></td>
+                    `;
+                }
+            }
+
+            for (const ic of existingIcs) {
+                if (!selectedIcs.includes(ic)) {
+                    tbody.querySelector(`tr[data-ic="${ic}"]`).remove();
+                }
+            }
+
+            tbody.querySelectorAll('.spec-type-select').forEach(sel => {
+                sel.onchange = handleSpecTypeChange;
+                handleSpecTypeChange({target: sel});
+            });
+        }
+        
+        function handleSpecTypeChange(event) {
+            const select = event.target;
+            const row = select.closest('tr');
+            const type = select.value;
+            const tjInput = row.querySelector('.spec-tj');
+            const rjcInput = row.querySelector('.spec-rjc');
+            const pdInput = row.querySelector('.spec-pd');
+            const taInput = row.querySelector('.spec-ta');
+            
+            tjInput.style.visibility = (type === 'Tc' || type === 'Tj') ? 'visible' : 'hidden';
+            rjcInput.style.visibility = (type === 'Tc') ? 'visible' : 'hidden';
+            pdInput.style.visibility = (type === 'Tc') ? 'visible' : 'hidden';
+            taInput.style.visibility = (type === 'Ta') ? 'visible' : 'hidden';
+
+            if (tjInput.style.visibility === 'hidden') tjInput.value = '';
+            if (rjcInput.style.visibility === 'hidden') rjcInput.value = '';
+            if (pdInput.style.visibility === 'hidden') pdInput.value = '';
+            if (taInput.style.visibility === 'hidden') taInput.value = '';
+        }
+
+        function addDeltaPair() {
+            const container = document.getElementById('cobra-delta-pairs-container');
+            const selectedSeries = Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value);
+            let optionsHtml = '<option value="---">---</option>';
+            selectedSeries.forEach(s => optionsHtml += `<option value="${s}">${s}</option>`);
+            const pairDiv = document.createElement('div');
+            pairDiv.className = 'grid grid-cols-1 sm:grid-cols-11 gap-2 items-center';
+            pairDiv.innerHTML = `<div class="sm:col-span-5"><select class="w-full bg-[var(--bg-light)] border border-[var(--border-color)] rounded p-1 text-sm">${optionsHtml}</select></div><span class="text-center hidden sm:block sm:col-span-1">-</span><div class="sm:col-span-5"><select class="w-full bg-[var(--bg-light)] border border-[var(--border-color)] rounded p-1 text-sm">${optionsHtml}</select></div>`;
+            container.appendChild(pairDiv);
+        }
+
+        function cleanSeriesHeader(rawHeader) {
+            let tempName = (rawHeader || '').toString().trim();
+            if (!tempName) return "Unnamed Series";
+            if (['DEFAULT', 'BASELINE'].includes(tempName.toUpperCase())) return tempName.charAt(0).toUpperCase() + tempName.slice(1).toLowerCase();
+            let bracketMatch = tempName.match(/\[(.*?)\]/);
+            if (bracketMatch) {
+                const content = (bracketMatch[1] || '').trim();
+                if (['DEFAULT', 'BASELINE'].includes(content.toUpperCase())) return content.charAt(0).toUpperCase() + content.slice(1).toLowerCase();
+                const keywords = ["CONFIGURATION", "CASE", "OPTION", "SERIES", "TEMP", "MAX"];
+                if (content && !keywords.some(k => k === content.toUpperCase())) return content;
+                tempName = tempName.replace(bracketMatch[0], "").trim();
+            }
+            const patterns = [/Temperature \(Solid\) Max.*/i, /\[°C\]/gi, /\(°C\)/gi, /°C/gi, /PoE mode_battery.*/i, /k=10.*/i];
+            patterns.forEach(p => tempName = tempName.replace(p, "").trim());
+            tempName = tempName.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+            return tempName || "Unnamed Series";
+        }
+
+        function cleanComponentDisplayName(rawName) {
+            let name = (rawName || '').toString().trim();
+            if (!name) return "Unnamed Component";
+            name = name.replace(/^VG\s+/i, "");
+            const suffixes = [/Temperature \(Solid\) Max.*/i, /Max \[°C\]/i, /\[°C\]/gi, /\(°C\)/gi, /°C/gi];
+            suffixes.forEach(s => name = name.replace(s, "").trim());
+            name = name.replace(/-\s*[\d\.\*\s\+\-/xX]+W/i, "").trim();
+            name = name.replace(/[\s_-]+$/, "").trim();
+            name = name.replace(/[\s_]+/g, " ").trim();
+            return name || "Unnamed Component";
+        }
+
+        function cobraPreStudy(workbook) {
+            if (!workbook.SheetNames.length) return { error: "Excel file contains no sheets." };
+            const targetSheetName = workbook.SheetNames[workbook.SheetNames.length - 1];
+            const sheet = workbook.Sheets[targetSheetName];
+            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+            let headerRowIdx = -1, componentColIdx = -1; 
+            for (let i = 0; i < 20 && i < jsonSheet.length; i++) {
+                const row = jsonSheet[i];
+                if (!row) continue;
+                for (let j = 0; j < 10 && j < row.length; j++) {
+                    const cellValue = row[j];
+                    if (cellValue && typeof cellValue === 'string' && cellValue.trim().toUpperCase().includes("GOAL")) {
+                        headerRowIdx = i; componentColIdx = j; break; 
+                    }
+                }
+                if (headerRowIdx !== -1) break;
+            }
+            if (headerRowIdx === -1) return { error: "Could not find a header containing 'Goal' in the first 20 rows of the last sheet." };
+            
+            const headerRow = jsonSheet[headerRowIdx];
+            const firstSeriesColIdx = componentColIdx + 1;
+            const rawSeriesNames = headerRow.slice(firstSeriesColIdx).filter(name => name && name.toString().trim() && name.toString().trim().toLowerCase() !== 'nan');
+            const seriesExcelIndices = {};
+            headerRow.forEach((name, i) => { if (i >= firstSeriesColIdx && rawSeriesNames.includes(name)) seriesExcelIndices[name] = i; });
+            const cleanedNames = [], counts = {}, cleanedToRawMap = {};
+            rawSeriesNames.forEach(rawName => {
+                const cleanBase = cleanSeriesHeader(rawName);
+                const count = counts[cleanBase] || 0;
+                const finalName = count > 0 ? `${cleanBase}_${count + 1}` : cleanBase;
+                counts[cleanBase] = count + 1;
+                cleanedNames.push(finalName);
+                cleanedToRawMap[finalName] = rawName;
+            });
+            const componentData = jsonSheet.slice(headerRowIdx + 1);
+            const cleanedComponentsSet = new Set();
+            componentData.forEach(row => {
+                if (row && row[componentColIdx]) {
+                    const cleaned = cleanComponentDisplayName(row[componentColIdx]);
+                    if (cleaned) cleanedComponentsSet.add(cleaned);
+                }
+            });
+            return { error: null, seriesNames: cleanedNames, componentNames: Array.from(cleanedComponentsSet).sort(), seriesExcelIndices, cleanedToRawMap, headerRowIdx, componentColIdx, targetSheetName };
+        }
+        
+        function runCobraAnalysis() {
+            loader.classList.remove('hidden');
+            loaderText.textContent = 'Analyzing System Pulse...';
+            try {
+                const selectedSeries = Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value);
+                const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
+                if (selectedSeries.length === 0 || selectedIcs.length === 0) throw new Error("Please select at least one configuration and one Key IC.");
+
+                const specData = [];
+                document.querySelectorAll('#cobra-spec-table tbody tr').forEach(row => {
+                    specData.push({
+                        Component: row.dataset.ic,
+                        'Spec Type': row.querySelector('.spec-type-select').value,
+                        'Tj (°C)': parseFloat(row.querySelector('.spec-tj').value) || null,
+                        'Rjc (°C/W)': parseFloat(row.querySelector('.spec-rjc').value) || null,
+                        'Pd (W)': parseFloat(row.querySelector('.spec-pd').value) || null,
+                        'Ta Limit (°C)': parseFloat(row.querySelector('.spec-ta').value) || null,
+                    });
+                });
+                
+                const deltaPairs = [];
+                document.querySelectorAll('#cobra-delta-pairs-container > div').forEach(pairDiv => {
+                    const selects = pairDiv.querySelectorAll('select');
+                    deltaPairs.push({ baseline: selects[0].value, compare: selects[1].value });
+                });
+
+                const prestudy = cobraState.prestudyData;
+                const sheet = cobraState.workbook.Sheets[prestudy.targetSheetName];
+                const dataRows = XLSX.utils.sheet_to_json(sheet, { header: 1, range: prestudy.headerRowIdx + 1, defval: "" });
+                const analysisData = {};
+                selectedSeries.forEach(cleanedName => {
+                    const rawName = prestudy.cleanedToRawMap[cleanedName];
+                    const colIdx = prestudy.seriesExcelIndices[rawName];
+                    analysisData[cleanedName] = dataRows.map(row => parseFloat(row[colIdx]));
+                });
+                const componentNames = dataRows.map(row => cleanComponentDisplayName(row[prestudy.componentColIdx]));
+                const tableData = [], keyIcData = {};
+                selectedIcs.forEach(ic => {
+                    const idx = componentNames.indexOf(ic);
+                    if (idx !== -1) {
+                        const temps = {};
+                        selectedSeries.forEach(sName => { temps[sName] = analysisData[sName][idx]; });
+                        keyIcData[ic] = temps;
+                        tableData.push({ Component: ic, ...temps });
+                    }
+                });
+                if (tableData.length === 0) throw new Error("No data found for the selected Key ICs.");
+
+                const results = {}, conclusionData = [];
+                specData.forEach(specRow => {
+                    const ic = specRow.Component, specType = specRow['Spec Type'];
+                    let effectiveSpec = NaN, specInputs = "N/A";
+                    try {
+                        if (specType === 'Tc') {
+                            const [tj, rjc, pd] = [specRow['Tj (°C)'], specRow['Rjc (°C/W)'], specRow['Pd (W)']];
+                            if (tj !== null && rjc !== null && pd !== null) { effectiveSpec = tj - (pd * rjc); specInputs = `Tj=${tj}, Rjc=${rjc}, Pd=${pd}`; }
+                        } else if (specType === 'Tj') {
+                            effectiveSpec = specRow['Tj (°C)'];
+                            if (effectiveSpec !== null) specInputs = `Tj Max: ${specRow['Tj (°C)']}`;
+                        } else if (specType === 'Ta') {
+                            effectiveSpec = specRow['Ta Limit (°C)'];
+                            if (effectiveSpec !== null) specInputs = `Ta Limit: ${specRow['Ta Limit (°C)']}`;
+                        }
+                    } catch(e) {/* ignore */}
+                    const icResult = { spec: effectiveSpec, result: "N/A", spec_type: specType, spec_inputs: specInputs, series_results: [] };
+                    if (!isNaN(effectiveSpec) && keyIcData[ic]) {
+                        icResult.result = "PASS";
+                        Object.entries(keyIcData[ic]).forEach(([s_name, temp]) => {
+                            let res = "N/A";
+                            if (temp !== null && !isNaN(temp)) {
+                                res = temp <= effectiveSpec ? "PASS" : "FAIL";
+                                if (res === "FAIL") icResult.result = "FAIL";
+                            }
+                            icResult.series_results.push({ series: s_name, temp: temp, result: res });
+                        });
+                    }
+                    results[ic] = icResult;
+                    conclusionData.push({ component: ic, ...icResult });
+                });
+                
+                let displayTable = [...tableData];
+                displayTable.forEach(row => {
+                    const ic = row.Component;
+                    const specResult = results[ic];
+                    if (specResult) {
+                        row['Spec (°C)'] = !isNaN(specResult.spec) ? `${specResult.spec_type} = ${specResult.spec.toFixed(1)}` : 'N/A';
+                        row['Result'] = specResult.result;
+                    }
+                });
+                deltaPairs.forEach(pair => {
+                    if (pair.baseline !== '---' && pair.compare !== '---' && pair.baseline !== pair.compare) {
+                        const deltaColName = `ΔT (${pair.baseline} - ${pair.compare}) (°C)`;
+                        displayTable.forEach(row => {
+                            const tempB = row[pair.baseline], tempC = row[pair.compare];
+                            row[deltaColName] = (typeof tempB === 'number' && typeof tempC === 'number') ? tempB - tempC : NaN;
+                        });
+                    }
+                });
+                const finalTableData = displayTable.map(row => {
+                    const newRow = { 'Component': row.Component };
+                    if (row['Spec (°C)'] !== undefined) newRow['Spec (°C)'] = row['Spec (°C)'];
+                    selectedSeries.forEach(s => newRow[s + ' (°C)'] = row[s]);
+                    const deltaCols = Object.keys(row).filter(k => k.startsWith('ΔT'));
+                    deltaCols.sort().forEach(k => newRow[k] = row[k]);
+                    if (row['Result'] !== undefined) newRow['Result'] = row['Result'];
+                    return newRow;
+                });
+                
+                cobraState.analysisResults = { conclusionData, tableData: finalTableData, chartData: tableData };
+                renderCobraResults(cobraState.analysisResults);
+                document.getElementById('cobra-results-area').classList.remove('hidden');
+
+            } catch (err) {
+                showMessage(`Analysis Error: ${err.message}`, 'error');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderCobraResults(results) {
+            renderCobraConclusions(results.conclusionData);
+            renderCobraTable(results.tableData);
+            renderCobraChart(results.chartData, Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value));
+        }
+        
+        function renderCobraConclusions(data) {
+            const container = document.getElementById('cobra-conclusions-content');
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="text-slate-400">No conclusion data to display.</p>`;
+                return;
+            }
+            const failedIcs = data.filter(item => item.result === 'FAIL').map(item => item.component);
+            let summaryHtml;
+            if (failedIcs.length > 0) {
+                summaryHtml = `<h3 class="text-xl font-bold mb-4">Executive Summary</h3><p><strong>Result: <span class="text-[var(--accent-red)]">FAIL</span></strong> - The following components exceeded thermal limits: <strong>${failedIcs.join(', ')}</strong></p>`;
+            } else {
+                summaryHtml = `<h3 class="text-xl font-bold mb-4">Executive Summary</h3><p><strong>Result: <span class="text-[var(--accent-green)]">PASS</span></strong> - All selected Key ICs are within their specified thermal limits.</p>`;
+            }
+            summaryHtml += '<hr class="border-[var(--border-color)] my-4">';
+            summaryHtml += '<h3 class="text-xl font-bold mb-4">Detailed Component Analysis</h3>';
+            data.forEach(item => {
+                const resultText = item.result;
+                const statusEmoji = resultText === 'FAIL' ? '🔴' : resultText === 'PASS' ? '🟢' : '⚪️';
+                const specVal = !isNaN(item.spec) ? `${item.spec.toFixed(1)}°C` : 'N/A';
+                summaryHtml += `<div class="mb-4 p-4 bg-[var(--bg-dark)] rounded-lg">
+                    <h4 class="font-bold text-lg">${item.component} — Result: ${statusEmoji} ${resultText}</h4>
+                    <div class="text-sm text-slate-400 mt-2 space-y-1">
+                        <p><strong>Specification Type:</strong> <code>${item.spec_type}</code></p>
+                        <p><strong>Calculated Spec Limit:</strong> <code>${specVal}</code></p>
+                        <p><strong>Specification Inputs:</strong> <code>${item.spec_inputs}</code></p>
+                    </div>
+                    <p class="mt-3 font-semibold text-slate-300">Performance per Configuration:</p>
+                    <table class="w-full text-sm mt-1">`;
+                item.series_results.forEach(res => {
+                    const tempText = res.temp !== null && !isNaN(res.temp) ? res.temp.toFixed(1) : "N/A";
+                    const resClass = res.result === 'FAIL' ? 'text-[var(--accent-red)] font-bold' : '';
+                    summaryHtml += `<tr><td class="w-1/2 py-1">${res.series}</td><td class="w-1/4 py-1">${tempText}°C</td><td class="w-1/4 py-1 ${resClass}">${res.result}</td></tr>`;
+                });
+                summaryHtml += `</table></div>`;
+            });
+            container.innerHTML = summaryHtml;
+        }
+
+        function renderCobraTable(data) {
+            const container = document.getElementById('cobra-table-content');
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="text-slate-400">No table data to display.</p>`;
+                return;
+            }
+            container.innerHTML = `<div id="cobra-table-render" class="overflow-x-auto p-2 bg-white"></div>
+                <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                    <button id="cobra-download-png" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">Download as PNG</button>
+                    <button id="cobra-download-excel" class="flex-1 bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">Download as Formatted Excel</button>
+                </div>`;
+
+            const tableContainer = document.getElementById('cobra-table-render');
+            tableContainer.innerHTML = ''; 
+            const table = document.createElement('table');
+            table.className = 'w-full';
+            table.style.borderCollapse = 'collapse';
+            table.style.fontFamily = 'Arial, sans-serif';
+
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            const headers = Object.keys(data[0]);
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                th.style.backgroundColor = '#606060'; th.style.color = 'white'; th.style.padding = '10px';
+                th.style.border = '1px solid #ccc'; th.style.textAlign = 'center'; th.style.fontWeight = 'bold';
+                headerRow.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+            data.forEach((row) => {
+                const tr = tbody.insertRow();
+                headers.forEach(h => {
+                    const td = tr.insertCell();
+                    let cellValue = row[h];
+                    if (typeof cellValue === 'number') cellValue = cellValue.toFixed(1);
+                    if(cellValue === null || cellValue === undefined || Number.isNaN(cellValue)) cellValue = 'N/A';
+                    td.textContent = cellValue;
+                    td.style.padding = '10px'; td.style.border = '1px solid #ccc'; td.style.textAlign = 'center';
+                    td.style.backgroundColor = '#f2f2f2'; td.style.color = '#333'; td.style.whiteSpace = 'nowrap';
+                    if (h === 'Result') {
+                        if (cellValue === 'PASS') { td.style.backgroundColor = '#C6EFCE'; td.style.color = '#006100'; }
+                        if (cellValue === 'FAIL') { td.style.backgroundColor = '#FFC7CE'; td.style.color = '#9C0006'; }
+                    }
+                });
+            });
+            tableContainer.appendChild(table);
+            document.getElementById('cobra-download-excel').addEventListener('click', downloadCobraExcel);
+            document.getElementById('cobra-download-png').addEventListener('click', downloadTableAsPNG);
+        }
+
+        function downloadTableAsPNG(){
+             html2canvas(document.getElementById('cobra-table-render').querySelector('table')).then(canvas => {
+                 const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
+                 a.download = 'cobra-table.png'; a.click();
+             });
+        }
+
+        function downloadCobraExcel() {
+            const tableData = cobraState.analysisResults.tableData;
+            if (!tableData || tableData.length === 0) {
+                showMessage("No data to export.", "error"); return;
+            }
+            const wb = XLSX.utils.book_new(); const ws = {};
+            const headers = Object.keys(tableData[0]);
+            const border = { top: { style: "thin", color: { rgb: "D9D9D9" } }, bottom: { style: "thin", color: { rgb: "D9D9D9" } }, left: { style: "thin", color: { rgb: "D9D9D9" } }, right: { style: "thin", color: { rgb: "D9D9D9" } } };
+            const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "606060" } }, alignment: { horizontal: "center", vertical: "center" }, border: border };
+            const defaultCellStyle = { fill: { fgColor: { rgb: "F2F2F2" } }, alignment: { horizontal: "center", vertical: "center" }, border: border, numFmt: "0.0" };
+            const componentCellStyle = { ...defaultCellStyle, alignment: { horizontal: "left", vertical: "center" } };
+            const passStyle = { ...defaultCellStyle, font: { color: { rgb: "006100" }, bold: true }, fill: { fgColor: { rgb: "C6EFCE" } } };
+            const failStyle = { ...defaultCellStyle, font: { color: { rgb: "9C0006" }, bold: true }, fill: { fgColor: { rgb: "FFC7CE" } } };
+            headers.forEach((header, C) => {
+                const cellRef = XLSX.utils.encode_cell({ c: C, r: 0 });
+                ws[cellRef] = { v: header, t: 's', s: headerStyle };
+            });
+            tableData.forEach((row, R) => {
+                const rowNum = R + 1;
+                headers.forEach((header, C) => {
+                    const cellRef = XLSX.utils.encode_cell({ c: C, r: rowNum });
+                    let value = row[header], cell = {};
+                    if (value === null || typeof value === 'undefined' || (typeof value === 'number' && isNaN(value))) {
+                        cell.v = "N/A"; cell.t = 's';
+                    } else if (typeof value === 'number') {
+                        cell.v = value; cell.t = 'n';
+                    } else {
+                        const numVal = parseFloat(value);
+                        if (!isNaN(numVal) && value.trim() === numVal.toString()) { cell.v = numVal; cell.t = 'n'; }
+                        else { cell.v = value; cell.t = 's'; }
+                    }
+                    let style = (header === 'Component') ? componentCellStyle : defaultCellStyle;
+                    if (header === 'Result') {
+                        if (cell.v === 'PASS') style = passStyle;
+                        else if (cell.v === 'FAIL') style = failStyle;
+                    }
+                    if (cell.t === 'n') style = { ...style, numFmt: "0.0" };
+                    cell.s = style;
+                    ws[cellRef] = cell;
+                });
+            });
+            ws['!cols'] = headers.map(h => {
+                if (h === 'Component') return { wch: 30 };
+                if (h === 'Spec (°C)') return { wch: 15 };
+                if (h === 'Result') return { wch: 10 };
+                if (h.includes('°C') || h.includes('ΔT')) return { wch: 20 };
+                return { wch: 15 };
+            });
+            const range = { s: { c: 0, r: 0 }, e: { c: headers.length - 1, r: tableData.length } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            XLSX.utils.book_append_sheet(wb, ws, "ThermalTableData");
+            XLSX.writeFile(wb, "cobra_results_formatted.xlsx");
+            showMessage("Formatted Excel file has been downloaded.", "success");
+        }
+
+        function renderCobraChart(data, selectedSeries) {
+            const container = document.getElementById('cobra-chart-content');
+            container.innerHTML = '<canvas id="cobra-chart-canvas"></canvas><div class="mt-6"><button id="cobra-download-chart" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">Download Chart as PNG</button></div>';
+            
+            if (cobraState.chartInstance) cobraState.chartInstance.destroy();
+
+            const ctx = document.getElementById('cobra-chart-canvas').getContext('2d');
+            const labels = data.map(d => d.Component);
+            const datasets = selectedSeries.map((seriesName, i) => {
+                const colors = ['#0A84FF', '#30D158', '#FF9F0A', '#FFD60A', '#5E5CE6', '#BF5AF2', '#FF453A'];
+                return {
+                    label: seriesName,
+                    data: data.map(d => { const val = d[seriesName]; return val !== null && !isNaN(val) ? val.toFixed(1) : null; }),
+                    backgroundColor: colors[i % colors.length] + 'B3', 
+                    borderColor: colors[i % colors.length],
+                    borderWidth: 1, borderRadius: 4,
+                };
+            });
+            Chart.register(ChartDataLabels);
+            const whiteBackgroundPlugin = {
+                id: 'whiteBackgroundPlugin',
+                beforeDraw: (chart) => {
+                    const ctx = chart.canvas.getContext('2d');
+                    ctx.save(); ctx.globalCompositeOperation = 'destination-over';
+                    ctx.fillStyle = 'white'; ctx.fillRect(0, 0, chart.width, chart.height);
+                    ctx.restore();
+                }
+            };
+            cobraState.chartInstance = new Chart(ctx, {
+                type: 'bar', data: { labels: labels, datasets: datasets },
+                plugins: [whiteBackgroundPlugin, ChartDataLabels],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 30 } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Temperature (°C)', color: '#111' }, grid: { color: '#e0e0e0' }, ticks: { color: '#666'} },
+                        x: { grid: { display: false }, ticks: { color: '#666'} }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Key IC Temperature Comparison', color: '#111', font: {size: 16, weight: 'bold'} },
+                        legend: { position: 'bottom', labels: { color: '#333' } },
+                        datalabels: {
+                            anchor: 'end', align: 'top', color: '#444', font: { weight: 'bold' },
+                            formatter: (value) => { return value ? parseFloat(value).toFixed(1) : ''; }
+                        }
+                    }
+                }
+            });
+            document.getElementById('cobra-download-chart').onclick = () => {
+                const url = cobraState.chartInstance.toBase64Image();
+                const a = document.createElement('a'); a.href = url;
+                a.download = 'cobra_chart.png'; a.click();
+            };
+        }
+
+        // ▼▼▼ REPORT GENERATOR FUNCTIONS ▼▼▼
+        
         function renderReportGenUI() {
             const reportGenUI = document.getElementById('reportgen-ui');
             const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
@@ -404,19 +1165,12 @@
             `;
             setupReportGenEventListeners();
         }
-
-        /**
-         * Sets up the event listener for the generate button.
-         */
+        
         function setupReportGenEventListeners() {
             document.getElementById('generate-ppt-button').addEventListener('click', generatePPT);
         }
 
-        /**
-         * Collects all data, sends it to the backend, and handles the file download.
-         */
         async function generatePPT() {
-            // --- Step 1: Collect Data ---
             const pptTemplateFile = document.getElementById('ppt-template-uploader').files[0];
             const powerExcelFile = document.getElementById('power-excel-uploader').files[0];
             
@@ -425,20 +1179,14 @@
                 return;
             }
             
-            // Use dummy data for cobraState if it doesn't exist, to allow testing.
             if (!cobraState.analysisResults) {
-                showMessage("Warning: Cobra analysis results not found. Using placeholder data.", "info");
-                cobraState.analysisResults = { tableData: [], chartData: [], conclusionData: [] };
+                showMessage("Cobra analysis results not found. Please run an analysis in the Cobra tab first.", "error");
+                return;
             }
-             if (!cobraState.chartInstance) {
-                // If the chart doesn't exist, we can't send an image. The backend will handle this.
-             }
-
 
             loader.classList.remove('hidden');
             loaderText.textContent = 'Generating report... Please wait.';
 
-            // Collect simulation settings from the UI
             const simSettings = {
                 ambient_temp: document.getElementById('sim-temp').value,
                 total_power: document.getElementById('sim-power').value,
@@ -446,11 +1194,9 @@
                 orientation: Array.from(document.querySelectorAll('input[name="orientation"]:checked')).map(cb => cb.value)
             };
 
-            // Get results and chart image from cobraState
             const cobraResults = cobraState.analysisResults;
             const chartImageBase64 = cobraState.chartInstance ? cobraState.chartInstance.toBase64Image() : null;
 
-            // --- Step 2: Package Data into FormData ---
             const formData = new FormData();
             formData.append('ppt_template', pptTemplateFile);
             if (powerExcelFile) {
@@ -466,7 +1212,6 @@
                 // !!! IMPORTANT: Replace the IP address below with your actual internal server's IP address !!!
                 const backend_url = 'http://192.168.1.55:5000/generate-report'; 
                 
-                // --- Step 3: Send Request to the Backend ---
                 const response = await fetch(backend_url, {
                     method: 'POST',
                     body: formData,
@@ -477,13 +1222,12 @@
                     throw new Error(errorData.message);
                 }
 
-                // --- Step 4: Handle Successful Response and Trigger Download ---
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = 'Generated_Sercomm_Report.pptx'; // Default download filename
+                a.download = 'Generated_Sercomm_Report.pptx';
                 document.body.appendChild(a);
                 a.click();
                 
@@ -493,17 +1237,13 @@
                 showMessage("Report generated successfully!", "success");
 
             } catch (error) {
-                // --- Step 5: Handle All Possible Errors ---
                 console.error('Error during report generation:', error);
                 showMessage(`Report generation failed: ${error.message}. Please check if the internal server is running.`, 'error');
             } finally {
-                // Hide the loader animation, regardless of success or failure
                 loader.classList.add('hidden');
             }
         }
-        // ▲▲▲ END: NEW JAVASCRIPT FUNCTIONS FOR REPORT GENERATOR ▲▲▲
 
-        // Wait for the DOM to be fully loaded before running the app
         document.addEventListener('DOMContentLoaded', initializeAndRunApp);
 
     </script>
