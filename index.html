@@ -32,7 +32,8 @@
             color: var(--text-primary);
         }
         .view { transition: opacity 0.3s ease-in-out; }
-        .hidden { display: none; }
+        /* --- FIX: Added !important to ensure this class always hides the element --- */
+        .hidden { display: none !important; }
         #message-box {
             position: fixed; top: 20px; right: 20px; padding: 1rem; border-radius: 0.5rem; color: white;
             z-index: 1000; opacity: 0; transform: translateY(-20px); transition: opacity 0.3s, transform 0.3s;
@@ -284,7 +285,15 @@
         // Function to switch between different views
         function showView(viewName) {
             window.scrollTo(0, 0); // Scroll to top on every view change
-            Object.keys(views).forEach(key => views[key].classList.toggle('hidden', key !== viewName));
+            Object.keys(views).forEach(key => {
+                // Correctly toggle the 'hidden' class based on the view to be shown
+                const shouldBeHidden = key !== viewName;
+                if (shouldBeHidden) {
+                    views[key].classList.add('hidden');
+                } else {
+                    views[key].classList.remove('hidden');
+                }
+            });
             appWrapper.classList.remove('hidden');
             if (viewName === 'auth' || viewName === 'register') {
                 loader.classList.add('hidden');
@@ -569,8 +578,8 @@
                                                         <input type="number" id="nc_ta" value="25" class="${inputClasses}">
                                                     </div>
                                                     <div>
-                                                         <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
-                                                         <input type="number" id="nc_ts" value="50" class="${inputClasses}">
+                                                        <label for="nc_ts" class="${labelClasses}">Allowable Surface Temp. (°C)</label>
+                                                        <input type="number" id="nc_ts" value="50" class="${inputClasses}">
                                                     </div>
                                                 </div>
                                             </div>
@@ -1185,9 +1194,9 @@
 
         function downloadTableAsPNG(){
              html2canvas(document.getElementById('cobra-table-render').querySelector('table')).then(canvas => {
-                const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
-                a.download = 'cobra-table.png'; a.click();
-             });
+                 const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
+                 a.download = 'cobra-table.png'; a.click();
+              });
         }
 
         function downloadCobraExcel() {
