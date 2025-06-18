@@ -176,7 +176,15 @@
         </div>
 
         <div id="admin-panel-view" class="view hidden p-4 md:p-10" style="background-color: var(--bg-dark);">
-            </div>
+            <header class="p-4 mb-6 flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold">Admin Panel</h1>
+                <button id="back-to-app-button" class="bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Back to App</button>
+            </header>
+            <main class="bg-[var(--bg-light)] p-4 md:p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-6">User Account Management</h2>
+                <div class="overflow-x-auto"><table class="w-full"><thead class="bg-black/20"><tr><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Email</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Role</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Status</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Actions</th></tr></thead><tbody id="user-list-body" class="divide-y divide-[var(--border-color)]"></tbody></table></div>
+            </main>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -193,6 +201,7 @@
         const views = { auth: document.getElementById('auth-view'), register: document.getElementById('register-view'), main: document.getElementById('main-app-view'), admin: document.getElementById('admin-panel-view') };
         const messageBox = document.getElementById('message-box');
         const cobraState = {};
+        let unsubscribeUserList; // FIX: Declared in global scope
 
         // Function to switch between different views
         function showView(viewName) {
@@ -272,7 +281,7 @@
                     currentUserData = { uid: user.uid, ...docSnap.data() };
                     document.getElementById('user-email-display').textContent = currentUserData.email;
                     document.getElementById('admin-panel-button').classList.toggle('hidden', currentUserData.role !== 'admin');
-                    if (currentUserData.role === 'admin') listenForUserUpdates();
+                    if (currentUserData.role === 'admin') listenForUserUpdates(); 
                     initializeSercommSuite(currentUserData);
                     showView('main');
                 } else {
@@ -1246,45 +1255,36 @@
                 showMessage("Cobra analysis results not found. Please run an analysis in the Cobra tab first.", "error");
                 return;
             }
-
             loader.classList.remove('hidden');
             loaderText.textContent = 'Generating PPT in browser...';
-            
             try {
                 let pptx = new PptxGenJS();
-
-                // === BUILT-IN TEMPLATE DEFINITION ===
-                
-                // 1. Define General Layout & Author
-                pptx.layout = "LAYOUT_16x9"; // Or "LAYOUT_4x3"
+                pptx.layout = "LAYOUT_16x9";
                 pptx.author = "Sercomm Thermal Team";
                 pptx.company = "Sercomm Corporation";
                 pptx.subject = "Thermal Simulation Report";
 
-                // 2. Define a Master Slide (for consistent footers, etc.)
-                // This will be applied to all content slides.
                 const SERCOMM_BLUE = "00529B";
+                const SERCOMM_GRAY = "666666";
+                const TITLE_COLOR = "0070C0";
+                
+                // Define a Master Slide for all content pages
                 pptx.defineSlideMaster({
                     title: "MASTER_SLIDE",
                     background: { color: "FFFFFF" },
                     objects: [
-                        { line: { x: 0.5, y: 7.2, w: 12.3, h: 0, line: { color: SERCOMM_BLUE, width: 2 } } },
-                        { text: { text: "Sercomm Proprietary and Confidential", options: { x: 0.5, y: 7.25, w: "90%", align: "center", color: "666666", fontSize: 10 } } },
+                        { text: { text: "Sercomm Proprietary and Confidential", options: { x: 0.5, y: 7.2, w: "90%", align: "center", color: SERCOMM_GRAY, fontSize: 10 } } },
                     ],
-                    slideNumber: { x: 12.7, y: 7.28, color: SERCOMM_BLUE, fontSize: 10, bold: true },
+                    slideNumber: { x: 12.8, y: 7.25, color: SERCOMM_BLUE, fontSize: 10, bold: true },
                 });
 
                 // --- SLIDE 1: Title Slide ---
                 let titleSlide = pptx.addSlide();
-                // For a more custom title slide, we don't use the master slide.
-                // We manually add elements to match your template.
                 titleSlide.background = { color: "FFFFFF" };
-                // A blue bar at the bottom
-                titleSlide.addShape(pptx.shapes.RECTANGLE, { x:0, y:6.8, w:'100%', h:0.7, fill: { color: SERCOMM_BLUE } });
                 titleSlide.addText("Thermal Simulation Report", { x: 0.6, y: 2.5, w: "90%", fontSize: 44, bold: true, color: "000000" });
-                titleSlide.addText("Project : [Project Name]", { x: 0.6, y: 3.5, w: "90%", fontSize: 24, color: "333333" }); // You can make the project name dynamic
-                titleSlide.addText(`Date: ${new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}`, { x: 0.6, y: 4.0, w: "90%", fontSize: 18, color: "666666" });
-                titleSlide.addText("Sercomm Thermal Team", { x: 0, y: 7.0, w: "100%", align: 'center', color: "FFFFFF", bold: true, fontSize: 14 });
+                titleSlide.addText("Project : [Project Name]", { x: 0.6, y: 3.5, w: "90%", fontSize: 24, color: SERCOMM_GRAY });
+                titleSlide.addText(`Date: ${new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}`, { x: 0.6, y: 4.0, w: "90%", fontSize: 18, color: SERCOMM_GRAY });
+                titleSlide.addText("Sercomm Thermal Team", { x: 0, y: 7.0, w: "100%", align: 'center', color: SERCOMM_GRAY, bold: true, fontSize: 14 });
                 
                 // --- SLIDE 2: Simulation Settings ---
                 const simSettings = {
@@ -1294,18 +1294,16 @@
                     orientation: Array.from(document.querySelectorAll('input[name="orientation"]:checked')).map(cb => cb.value)
                 };
                 let slide2 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
-                slide2.addText("Simulation Setting", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
+                slide2.addText("Simulation Setting", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: TITLE_COLOR, underline: { color: TITLE_COLOR, style: 'solid'} });
                 
                 const settingsText = [
-                    { text: `Ambient Temperature: ${simSettings.ambient_temp}°C`, options: { bullet: { code: '2713' }, color: '333333' } },
+                    { text: `Ambient Temperature: ${simSettings.ambient_temp}°C`, options: { bullet: { code: '2713' } } },
                     { text: `Natural Convection System`, options: { bullet: { code: '2713' } } },
                     { text: `Orientation: ${simSettings.orientation.join(', ')}`, options: { bullet: { code: '2713' } } },
                     { text: `Total Power Consumption: ${simSettings.total_power} W`, options: { bullet: { code: '2713' } } },
                 ];
-                slide2.addText(settingsText, { x: 0.8, y: 1.5, w: "50%", h: 2, fontSize: 18, color: "333333" });
-                // You can add product images here if you have their URLs or base64 data
-                // slide2.addImage({ path: "URL_or_Base64", x: 6.0, y: 1.5, w: 4, h: 3 });
-
+                slide2.addText(settingsText, { x: 0.8, y: 1.5, w: "50%", h: 2, fontSize: 18 });
+                
                 // --- SLIDE 3: Power Table (if file is provided) ---
                 const powerExcelFile = document.getElementById('power-excel-uploader').files[0];
                 if (powerExcelFile) {
@@ -1317,62 +1315,50 @@
                     
                     if (json_data.length > 0) {
                         let slide3 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
-                        slide3.addText("Total System Power Consumption", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
+                        slide3.addText("Total System Power Consumption", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: TITLE_COLOR, underline: { color: TITLE_COLOR, style: 'solid'} });
                         slide3.addTable(json_data, { 
                             x: 0.5, y: 1.2, w: 12.3, 
                             autoPage: true, 
                             border: { type: 'solid', pt: 1, color: "BFBFBF" },
                             rowH: 0.3,
                             fill: { color: "F2F2F2" },
-                            color: "000000",
-                            valign: "middle",
-                            fontFace: "Arial",
                             fontSize: 10,
-                            // Style the header row differently
-                            head: {
-                                fill: { color: "4472C4" },
-                                color: "FFFFFF",
-                                bold: true
-                            }
+                            head: { fill: { color: "4472C4" }, color: "FFFFFF", bold: true }
                          });
                     }
                 }
                 
-                // --- SLIDE 4: Cobra Results (Chart and Table) ---
-                let slide4 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
-                slide4.addText("Results - Components", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
-                
-                // Add Cobra Table
+                // --- SLIDE 4: Cobra Results Table ---
                 if (cobraState.analysisResults && cobraState.analysisResults.tableData) {
-                    // Convert cobra table data to pptxgenjs format (array of arrays)
+                    let slide4 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                    slide4.addText("Results - Components", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: TITLE_COLOR, underline: { color: TITLE_COLOR, style: 'solid'} });
+                    
                     const cobraTableData = [];
                     const headers = Object.keys(cobraState.analysisResults.tableData[0]);
-                    cobraTableData.push(headers);
+                    cobraTableData.push(headers.map(h => ({text: h, options: {fill: "4472C4", color:"FFFFFF", bold: true}})));
                     cobraState.analysisResults.tableData.forEach(row => {
                         cobraTableData.push(headers.map(header => row[header]));
                     });
-
-                    slide4.addTable(cobraTableData, { x: 0.5, y: 1.2, w: 12.3, fontSize: 9, border: {type: 'solid', pt: 1, color: "BFBFBF"} });
+                    slide4.addTable(cobraTableData, { x: 0.5, y: 1.2, w: 12.3, fontSize: 9, border: {type: 'solid', pt: 1, color: "BFBFBF"}, rowH: 0.3 });
                 }
 
                 // --- SLIDE 5: Cobra Chart ---
-                let slide5 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
-                slide5.addText("Results - Chart", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
                 const chartImageBase64 = cobraState.chartInstance ? cobraState.chartInstance.toBase64Image() : null;
                 if (chartImageBase64) {
+                    let slide5 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                    slide5.addText("Results - Chart", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: TITLE_COLOR, underline: { color: TITLE_COLOR, style: 'solid'} });
                     slide5.addImage({ data: chartImageBase64, x: 1.0, y: 1.0, w: 11.3, h: 5.8 });
                 }
 
                 // --- SLIDE 6: Summary ---
-                let slide6 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
-                slide6.addText("Summary & Conclusions", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
                 const conclusionsContainer = document.getElementById('cobra-conclusions-content');
-                 if (conclusionsContainer && conclusionsContainer.innerText) {
+                if (conclusionsContainer && conclusionsContainer.innerText) {
+                    let slide6 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                    slide6.addText("Summary & Conclusions", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: TITLE_COLOR, underline: { color: TITLE_COLOR, style: 'solid'} });
                     const conclusionsText = conclusionsContainer.innerText.replace(/(\r\n|\n|\r)/gm, "\n").trim();
-                    slide6.addText(conclusionsText, { x: 0.5, y: 1.2, w: 12.3, h: 5.5, fontSize: 16, valign: 'top' });
+                    slide6.addText(conclusionsText, { x: 0.5, y: 1.2, w: 12.3, h: 5.5, fontSize: 16, valign: 'top', bullet: true });
                 }
 
-                // --- Final Step: Write the file and trigger download ---
                 await pptx.writeFile({ fileName: "Sercomm_Thermal_Report.pptx" });
                 
                 showMessage("Report generated successfully!", "success");
