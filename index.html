@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Library for Pure Frontend PPT Generation -->
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -167,7 +166,7 @@
                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <h1 id="mobile-tool-title" class="text-xl font-bold">Cobra</h1>
-                    <div><!-- Spacer --></div>
+                    <div></div>
                 </header>
                 
                 <div id="cobra-ui" class="tool-ui hidden"></div>
@@ -177,8 +176,7 @@
         </div>
 
         <div id="admin-panel-view" class="view hidden p-4 md:p-10" style="background-color: var(--bg-dark);">
-            <!-- Admin panel content... -->
-        </div>
+            </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -390,7 +388,24 @@
         }
 
         function listenForUserUpdates() {
-            // Your full admin panel listener logic...
+            if (unsubscribeUserList) unsubscribeUserList();
+            unsubscribeUserList = db.collection("users").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                const userListBody = document.getElementById('user-list-body');
+                if (!userListBody) return;
+                userListBody.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const user = { id: docSnap.id, ...docSnap.data() };
+                    const tr = document.createElement('tr');
+                    const activeText = user.isActive ? 'Active' : 'Inactive';
+                    const activeClass = user.isActive ? 'text-green-400' : 'text-yellow-400';
+                    const toggleActiveText = user.isActive ? 'Deactivate' : 'Activate';
+                    tr.innerHTML = `<td class="p-3 text-sm text-slate-300">${user.email}</td><td class="p-3 text-sm text-slate-300">${user.role}</td><td class="p-3 text-sm font-medium ${activeClass}">${activeText}</td><td class="p-3 text-sm font-medium space-x-2"><button data-id="${user.id}" data-active="${user.isActive}" class="toggle-active-btn text-white px-3 py-1 text-xs rounded transition ${user.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}">${toggleActiveText}</button></td>`;
+                    userListBody.appendChild(tr);
+                });
+            }, (error) => {
+                console.error("Error listening to user updates: ", error);
+                showMessage("Could not load user list for admin panel.", "error");
+            });
         }
 
         function initializeSercommSuite(user) {
@@ -415,7 +430,6 @@
         }
         
         // --- VIPER UI & LOGIC ---
-
         function renderViperUI() {
             const viperUI = document.getElementById('viper-ui');
             const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
@@ -492,7 +506,9 @@
             ['fc_power_q', 'fc_tin', 'fc_tout'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplayFC));
             ['solar_mat', 'solar_alpha_custom', 'solar_area', 'solar_irradiance'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplaySolar));
             document.getElementById('solar_mat')?.addEventListener('change', (e) => { document.getElementById('solar_alpha_custom').classList.toggle('hidden', e.target.value !== 'custom'); });
-            calculateAndDisplayNC(); calculateAndDisplayFC(); calculateAndDisplaySolar();
+            calculateAndDisplayNC();
+            calculateAndDisplayFC();
+            calculateAndDisplaySolar();
         }
 
         function calculateAndDisplayNC() {
@@ -500,7 +516,7 @@
             const [L, W, H, Ta, Ts_peak] = ['nc_l', 'nc_w', 'nc_h', 'nc_ta', 'nc_ts'].map(id => parseFloat(document.getElementById(id).value));
             const material_props = materials[document.getElementById('nc_mat').value];
             const resultsDiv = document.getElementById('nc-results');
-            if (!resultsDiv || !L || !W || !H || !Ta || !Ts_peak) return;
+            if (!resultsDiv || isNaN(L) || isNaN(W) || isNaN(H) || isNaN(Ta) || isNaN(Ts_peak)) return;
             if (Ts_peak <= Ta) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Max. Surface Temp (Ts) must be higher than Ambient Temp (Ta).</p>`; return; }
             if (L <= 0 || W <= 0 || H <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Product dimensions (L, W, H) must be greater than zero.</p>`; return; }
             const STEFAN_BOLTZMANN_CONST = 5.67e-8, EPSILON = 1e-9, BUILT_IN_SAFETY_FACTOR = 0.9, { emissivity, k_uniform } = material_props;
@@ -520,7 +536,7 @@
         function calculateAndDisplayFC() {
             const [power_q, T_in, T_out] = ['fc_power_q', 'fc_tin', 'fc_tout'].map(id => parseFloat(document.getElementById(id).value));
             const resultsDiv = document.getElementById('fc-results');
-            if (!resultsDiv || !power_q || !T_in || !T_out) return;
+            if (!resultsDiv || isNaN(power_q) || isNaN(T_in) || isNaN(T_out)) return;
             if (T_out <= T_in) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Outlet Temperature must be higher than Inlet Temperature.</p>`; return; }
             if (power_q <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Power to be dissipated must be greater than zero.</p>`; return; }
             const AIR_SPECIFIC_HEAT_CP = 1006, AIR_DENSITY_RHO = 1.225, M3S_TO_CFM_CONVERSION = 2118.88;
@@ -535,11 +551,13 @@
             if (matSelect.value === 'custom') alpha = parseFloat(document.getElementById('solar_alpha_custom').value) || 0;
             const [projected_area_mm2, solar_irradiance] = ['solar_area', 'solar_irradiance'].map(id => parseFloat(document.getElementById(id).value));
             const resultsDiv = document.getElementById('solar-results');
-            if (!resultsDiv || !projected_area_mm2 || !solar_irradiance) return;
+            if (!resultsDiv || isNaN(projected_area_mm2) || isNaN(solar_irradiance)) return;
             if (projected_area_mm2 <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Projected Surface Area must be greater than zero.</p>`; return; }
             const projected_area_m2 = projected_area_mm2 / 1_000_000, solar_gain = alpha * projected_area_m2 * solar_irradiance;
             resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">☀️ Absorbed Solar Heat Gain</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${solar_gain.toFixed(1)} W</p></div>`;
         }
+
+        // --- COBRA UI & LOGIC ---
 
         function renderCobraUI() {
             const cobraUI = document.getElementById('cobra-ui');
@@ -601,8 +619,6 @@
             `;
             setupCobraEventListeners();
         }
-
-        // All other original Cobra helper functions are now fully implemented below
         
         function setupCobraEventListeners() {
             document.getElementById('cobra-file-uploader').addEventListener('change', handleCobraFileUpload);
@@ -1193,7 +1209,7 @@
                     <div>
                         <h3 class="text-lg md:text-xl font-semibold mb-4">1. Template Information</h3>
                          <div class="p-6 bg-[var(--bg-light)] rounded-lg text-slate-400">
-                            <p>The presentation template is now defined in the code to ensure consistency. No upload is needed.</p>
+                            <p>The presentation template is now built-in to the code to ensure consistency. No upload is needed.</p>
                          </div>
                     </div>
                     <div>
@@ -1230,41 +1246,67 @@
                 showMessage("Cobra analysis results not found. Please run an analysis in the Cobra tab first.", "error");
                 return;
             }
+
             loader.classList.remove('hidden');
             loaderText.textContent = 'Generating PPT in browser...';
+            
             try {
                 let pptx = new PptxGenJS();
-                pptx.defineLayout({ name: "A4", width: 11.7, height: 8.3 });
-                pptx.layout = "A4";
+
+                // === BUILT-IN TEMPLATE DEFINITION ===
                 
+                // 1. Define General Layout & Author
+                pptx.layout = "LAYOUT_16x9"; // Or "LAYOUT_4x3"
+                pptx.author = "Sercomm Thermal Team";
+                pptx.company = "Sercomm Corporation";
+                pptx.subject = "Thermal Simulation Report";
+
+                // 2. Define a Master Slide (for consistent footers, etc.)
+                // This will be applied to all content slides.
+                const SERCOMM_BLUE = "00529B";
                 pptx.defineSlideMaster({
-                    title: "CONTENT_MASTER",
+                    title: "MASTER_SLIDE",
                     background: { color: "FFFFFF" },
                     objects: [
-                        { text: { text: "Proprietary and Confidential", options: { x: 0.5, y: 7.8, w: "90%", align: "center", color: "A0A0A0", fontSize: 10 } } },
-                        { "placeholder": { options: { name: "footer", type: "footer", x: 9.5, y: 7.8, w: 1.5, h: 0.3, color: "A0A0A0", fontSize: 10 }, text: "Sercomm" } },
+                        { line: { x: 0.5, y: 7.2, w: 12.3, h: 0, line: { color: SERCOMM_BLUE, width: 2 } } },
+                        { text: { text: "Sercomm Proprietary and Confidential", options: { x: 0.5, y: 7.25, w: "90%", align: "center", color: "666666", fontSize: 10 } } },
                     ],
-                    slideNumber: { x: 10.8, y: 7.8, color: "A0A0A0", fontSize: 10 },
+                    slideNumber: { x: 12.7, y: 7.28, color: SERCOMM_BLUE, fontSize: 10, bold: true },
                 });
 
+                // --- SLIDE 1: Title Slide ---
                 let titleSlide = pptx.addSlide();
-                titleSlide.addText("Thermal Analysis Report", { x: 1.0, y: 2.5, w: "80%", fontSize: 36, bold: true, color: "00529B" });
-                titleSlide.addText(`Project: [Your Project Name Here]\nGenerated on: ${new Date().toLocaleDateString()}`, { x: 1.0, y: 3.5, w: "80%", fontSize: 18, color: "333333" });
+                // For a more custom title slide, we don't use the master slide.
+                // We manually add elements to match your template.
+                titleSlide.background = { color: "FFFFFF" };
+                // A blue bar at the bottom
+                titleSlide.addShape(pptx.shapes.RECTANGLE, { x:0, y:6.8, w:'100%', h:0.7, fill: { color: SERCOMM_BLUE } });
+                titleSlide.addText("Thermal Simulation Report", { x: 0.6, y: 2.5, w: "90%", fontSize: 44, bold: true, color: "000000" });
+                titleSlide.addText("Project : [Project Name]", { x: 0.6, y: 3.5, w: "90%", fontSize: 24, color: "333333" }); // You can make the project name dynamic
+                titleSlide.addText(`Date: ${new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}`, { x: 0.6, y: 4.0, w: "90%", fontSize: 18, color: "666666" });
+                titleSlide.addText("Sercomm Thermal Team", { x: 0, y: 7.0, w: "100%", align: 'center', color: "FFFFFF", bold: true, fontSize: 14 });
                 
+                // --- SLIDE 2: Simulation Settings ---
                 const simSettings = {
                     ambient_temp: document.getElementById('sim-temp').value,
                     total_power: document.getElementById('sim-power').value,
                     convection: document.querySelector('input[name="convection"]:checked').value,
                     orientation: Array.from(document.querySelectorAll('input[name="orientation"]:checked')).map(cb => cb.value)
                 };
-                let slide2 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
-                slide2.addText("Simulation Settings", { x: 0.5, y: 0.5, w: "90%", fontSize: 24, bold: true, color: "00529B" });
-                const settingsText = `• Ambient Temperature: ${simSettings.ambient_temp}°C\n` +
-                                     `• Total Power Consumption: ${simSettings.total_power} W\n` +
-                                     `• Convection Type: ${simSettings.convection}\n` +
-                                     `• System Orientation: ${simSettings.orientation.join(', ')}`;
-                slide2.addText(settingsText, { x: 0.5, y: 1.5, w: "50%", h: 2, fontSize: 16, bullet: true });
+                let slide2 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                slide2.addText("Simulation Setting", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
                 
+                const settingsText = [
+                    { text: `Ambient Temperature: ${simSettings.ambient_temp}°C`, options: { bullet: { code: '2713' }, color: '333333' } },
+                    { text: `Natural Convection System`, options: { bullet: { code: '2713' } } },
+                    { text: `Orientation: ${simSettings.orientation.join(', ')}`, options: { bullet: { code: '2713' } } },
+                    { text: `Total Power Consumption: ${simSettings.total_power} W`, options: { bullet: { code: '2713' } } },
+                ];
+                slide2.addText(settingsText, { x: 0.8, y: 1.5, w: "50%", h: 2, fontSize: 18, color: "333333" });
+                // You can add product images here if you have their URLs or base64 data
+                // slide2.addImage({ path: "URL_or_Base64", x: 6.0, y: 1.5, w: 4, h: 3 });
+
+                // --- SLIDE 3: Power Table (if file is provided) ---
                 const powerExcelFile = document.getElementById('power-excel-uploader').files[0];
                 if (powerExcelFile) {
                     const data = await powerExcelFile.arrayBuffer();
@@ -1274,27 +1316,65 @@
                     const json_data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
                     if (json_data.length > 0) {
-                        let slide3 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
-                        slide3.addText("Total System Power Consumption", { x: 0.5, y: 0.5, w: "90%", fontSize: 24, bold: true, color: "00529B" });
-                        slide3.addTable(json_data, { x: 0.5, y: 1.5, w: 10.7, autoPage: true, border: { type: 'solid', pt: 1, color: "CCCCCC" }, colW: [3, 2, 2, 3] });
+                        let slide3 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                        slide3.addText("Total System Power Consumption", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
+                        slide3.addTable(json_data, { 
+                            x: 0.5, y: 1.2, w: 12.3, 
+                            autoPage: true, 
+                            border: { type: 'solid', pt: 1, color: "BFBFBF" },
+                            rowH: 0.3,
+                            fill: { color: "F2F2F2" },
+                            color: "000000",
+                            valign: "middle",
+                            fontFace: "Arial",
+                            fontSize: 10,
+                            // Style the header row differently
+                            head: {
+                                fill: { color: "4472C4" },
+                                color: "FFFFFF",
+                                bold: true
+                            }
+                         });
                     }
                 }
                 
-                let slide4 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
-                slide4.addText("Results Comparison", { x: 0.5, y: 0.5, w: "90%", fontSize: 24, bold: true, color: "00529B" });
+                // --- SLIDE 4: Cobra Results (Chart and Table) ---
+                let slide4 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                slide4.addText("Results - Components", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
                 
+                // Add Cobra Table
+                if (cobraState.analysisResults && cobraState.analysisResults.tableData) {
+                    // Convert cobra table data to pptxgenjs format (array of arrays)
+                    const cobraTableData = [];
+                    const headers = Object.keys(cobraState.analysisResults.tableData[0]);
+                    cobraTableData.push(headers);
+                    cobraState.analysisResults.tableData.forEach(row => {
+                        cobraTableData.push(headers.map(header => row[header]));
+                    });
+
+                    slide4.addTable(cobraTableData, { x: 0.5, y: 1.2, w: 12.3, fontSize: 9, border: {type: 'solid', pt: 1, color: "BFBFBF"} });
+                }
+
+                // --- SLIDE 5: Cobra Chart ---
+                let slide5 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                slide5.addText("Results - Chart", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
                 const chartImageBase64 = cobraState.chartInstance ? cobraState.chartInstance.toBase64Image() : null;
                 if (chartImageBase64) {
-                    slide4.addImage({ data: chartImageBase64, x: 0.5, y: 1.2, w: 7, h: 5.25 });
+                    slide5.addImage({ data: chartImageBase64, x: 1.0, y: 1.0, w: 11.3, h: 5.8 });
                 }
-                
+
+                // --- SLIDE 6: Summary ---
+                let slide6 = pptx.addSlide({ masterName: "MASTER_SLIDE" });
+                slide6.addText("Summary & Conclusions", { x: 0.5, y: 0.2, w: "90%", fontSize: 28, bold: true, color: SERCOMM_BLUE, underline: { color: SERCOMM_BLUE, style: 'solid'} });
                 const conclusionsContainer = document.getElementById('cobra-conclusions-content');
-                if (conclusionsContainer && conclusionsContainer.innerText) {
+                 if (conclusionsContainer && conclusionsContainer.innerText) {
                     const conclusionsText = conclusionsContainer.innerText.replace(/(\r\n|\n|\r)/gm, "\n").trim();
-                    slide4.addText(conclusionsText, { x: 8.0, y: 1.2, w: 3.2, h: 5.25, fontSize: 12, valign: 'top' });
+                    slide6.addText(conclusionsText, { x: 0.5, y: 1.2, w: 12.3, h: 5.5, fontSize: 16, valign: 'top' });
                 }
-                
+
+                // --- Final Step: Write the file and trigger download ---
                 await pptx.writeFile({ fileName: "Sercomm_Thermal_Report.pptx" });
+                
                 showMessage("Report generated successfully!", "success");
 
             } catch (error) {
@@ -1306,6 +1386,7 @@
         }
         
         document.addEventListener('DOMContentLoaded', initializeAndRunApp);
+
     </script>
 </body>
 </html>
