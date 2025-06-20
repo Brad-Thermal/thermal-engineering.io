@@ -208,7 +208,7 @@
                             <label for="register-password" class="block text-sm font-medium text-slate-400 mb-2">Set Password</label>
                             <input type="password" id="register-password" required minlength="6" class="w-full px-4 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
                         </div>
-                        <button type="submit" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg transition duration-300">Submit Application</button>
+                        <button type="submit" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg transition duration-300">Submit Request</button>
                     </form>
                     <div class="text-center mt-6">
                         <p class="text-sm text-slate-400">Already have an account? <a href="#" id="show-login" class="font-medium text-[var(--accent-blue)] hover:underline">Back to Login</a></p>
@@ -251,7 +251,7 @@
                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <h1 id="mobile-tool-title" class="text-xl font-bold">Cobra</h1>
-                    <div><!-- Spacer --></div>
+                    <div></div>
                 </header>
                 
                 <div id="cobra-ui" class="tool-ui hidden"></div>
@@ -508,12 +508,24 @@
         let unsubscribeUserList; 
         function listenForUserUpdates() {
             if (unsubscribeUserList) unsubscribeUserList();
-            unsubscribeUserList = db.collection("users").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+            unsubscribeUserList = db.collection("users").onSnapshot((snapshot) => {
                 const userListBody = document.getElementById('user-list-body');
                 if (!userListBody) return;
-                userListBody.innerHTML = '';
+                
+                const users = [];
                 snapshot.forEach(docSnap => {
-                    const user = { id: docSnap.id, ...docSnap.data() };
+                    users.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Sort on the client side
+                users.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis() || 0;
+                    const timeB = b.createdAt?.toMillis() || 0;
+                    return timeB - timeA; // Descending
+                });
+
+                userListBody.innerHTML = '';
+                users.forEach(user => {
                     const tr = document.createElement('tr');
                     const activeText = user.isActive ? 'Active' : 'Inactive';
                     const activeClass = user.isActive ? 'text-green-400' : 'text-yellow-400';
@@ -521,6 +533,7 @@
                     tr.innerHTML = `<td class="p-3 text-sm text-slate-300">${user.email}</td><td class="p-3 text-sm text-slate-300">${user.role}</td><td class="p-3 text-sm font-medium ${activeClass}">${activeText}</td><td class="p-3 text-sm font-medium space-x-2"><button data-id="${user.id}" data-active="${user.isActive}" class="toggle-active-btn text-white px-3 py-1 text-xs rounded transition ${user.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}">${toggleActiveText}</button></td>`;
                     userListBody.appendChild(tr);
                 });
+
             }, (error) => {
                 console.error("Error listening to user updates: ", error);
                 showMessage("Could not load user list for admin panel.", "error");
@@ -554,59 +567,59 @@
             const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
             const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
             viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
-                                    <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
-                                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
-                                </div>
-                                <div id="viper-tabs" class="st-tabs-container">
-                                    <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
-                                    <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
-                                    <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
-                                </div>
-                                <div id="nat-conv-content" class="st-tab-content active">
-                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
-                                    <div class="grid md:grid-cols-2 gap-8">
-                                        <div class="space-y-6">
-                                            <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
-                                            <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
-                                            <div>
-                                                <label class="${labelClasses}">Product Dimensions (mm)</label>
-                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                    <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
-                                                    <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
-                                                    <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
-                                                </div>
-                                            </div>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
-                                                    <input type="number" id="nc_ta" value="25" class="${inputClasses}">
-                                                </div>
-                                                <div>
-                                                     <label for="nc_ts" class="${labelClasses}">Max. Surface Temp. (°C)</label>
-                                                     <input type="number" id="nc_ts" value="50" class="${inputClasses}">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
-                                            <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
-                                            <div id="nc-results" class="space-y-4"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="force-conv-content" class="st-tab-content">
-                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
-                                    <div class="grid md:grid-cols-2 gap-8">
-                                        <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
-                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
-                                    </div>
-                                </div>
-                                <div id="solar-rad-content" class="st-tab-content">
-                                    <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
-                                    <div class="grid md:grid-cols-2 gap-8">
-                                        <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
-                                        <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
-                                    </div>
-                                </div>`;
+                                     <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
+                                     <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
+                                 </div>
+                                 <div id="viper-tabs" class="st-tabs-container">
+                                     <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
+                                     <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
+                                     <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
+                                 </div>
+                                 <div id="nat-conv-content" class="st-tab-content active">
+                                     <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
+                                     <div class="grid md:grid-cols-2 gap-8">
+                                         <div class="space-y-6">
+                                             <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
+                                             <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
+                                             <div>
+                                                 <label class="${labelClasses}">Product Dimensions (mm)</label>
+                                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                     <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
+                                                     <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
+                                                     <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
+                                                 </div>
+                                             </div>
+                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                 <div>
+                                                     <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
+                                                     <input type="number" id="nc_ta" value="25" class="${inputClasses}">
+                                                 </div>
+                                                 <div>
+                                                      <label for="nc_ts" class="${labelClasses}">Max. Surface Temp. (°C)</label>
+                                                      <input type="number" id="nc_ts" value="50" class="${inputClasses}">
+                                                 </div>
+                                             </div>
+                                         </div>
+                                         <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
+                                             <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
+                                             <div id="nc-results" class="space-y-4"></div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div id="force-conv-content" class="st-tab-content">
+                                     <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
+                                     <div class="grid md:grid-cols-2 gap-8">
+                                         <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
+                                         <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
+                                     </div>
+                                 </div>
+                                 <div id="solar-rad-content" class="st-tab-content">
+                                     <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
+                                     <div class="grid md:grid-cols-2 gap-8">
+                                         <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
+                                         <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
+                                     </div>
+                                 </div>`;
             setupViperEventListeners();
         }
         
@@ -682,7 +695,6 @@
                     <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Transformation & Analysis</p></div>
                 </div>
 
-                <!-- Setup Area -->
                 <div id="cobra-setup-area" class="space-y-8">
                     <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
                         <h3 class="text-xl font-semibold mb-4 text-white">1. Upload Data File</h3>
@@ -699,9 +711,9 @@
                             <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
                                <h3 class="text-xl font-semibold mb-4 text-white">2. Analysis Parameters</h3>
                                <div id="cobra-selection-tabs" class="st-tabs-container">
-                                    <button data-tab="series" class="st-tab active">Configurations</button>
-                                    <button data-tab="ics" class="st-tab">Key ICs</button>
-                                    <button data-tab="delta" class="st-tab">ΔT Comparison</button>
+                                   <button data-tab="series" class="st-tab active">Configurations</button>
+                                   <button data-tab="ics" class="st-tab">Key ICs</button>
+                                   <button data-tab="delta" class="st-tab">ΔT Comparison</button>
                                </div>
                                <div id="cobra-series-content" class="st-tab-content active"></div>
                                <div id="cobra-ics-content" class="st-tab-content"></div>
@@ -720,7 +732,6 @@
                     </div>
                 </div>
 
-                <!-- Results Area -->
                 <div id="cobra-results-area" class="hidden">
                      <div class="border-t border-[var(--border-color)] my-10"></div>
                      <h2 class="text-2xl md:text-3xl font-bold mb-2">Analysis Results</h2>
@@ -733,7 +744,7 @@
                      <div id="cobra-conclusions-content" class="st-tab-content active"></div>
                      <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
                      <div id="cobra-chart-content" class="st-tab-content bg-white p-4 md:p-6 rounded-lg h-[450px]"></div>
-                 </div>
+                </div>
             `;
             setupCobraEventListeners();
         }
@@ -1125,9 +1136,9 @@
             const failedIcs = data.filter(item => item.result === 'FAIL').map(item => item.component);
             let summaryHtml;
             if (failedIcs.length > 0) {
-                summaryHtml = `<div class="bg-[var(--bg-light)] p-6 rounded-xl mb-6"><h3 class="text-xl font-bold mb-4">Executive Summary</h3><p class="text-lg"><strong>Result: <span class="text-[var(--accent-red)]">FAIL</span></strong></p><p class="mt-2 text-slate-300">The following components exceeded thermal limits: <strong>${failedIcs.join(', ')}</strong></p></div>`;
+                summaryHtml = `<div class="bg-[var(--bg-light)] p-6 rounded-xl mb-6"><h3 class="text-xl font-bold mb-4">Summary</h3><p class="text-lg"><strong>Result: <span class="text-[var(--accent-red)]">FAIL</span></strong></p><p class="mt-2 text-slate-300">The following components exceeded thermal limits: <strong>${failedIcs.join(', ')}</strong></p></div>`;
             } else {
-                summaryHtml = `<div class="bg-[var(--bg-light)] p-6 rounded-xl mb-6"><h3 class="text-xl font-bold mb-4">Executive Summary</h3><p class="text-lg"><strong>Result: <span class="text-[var(--accent-green)]">PASS</span></strong></p><p class="mt-2 text-slate-300">All selected Key ICs are within their specified thermal limits across all tested configurations.</p></div>`;
+                summaryHtml = `<div class="bg-[var(--bg-light)] p-6 rounded-xl mb-6"><h3 class="text-xl font-bold mb-4">Summary</h3><p class="text-lg"><strong>Result: <span class="text-[var(--accent-green)]">PASS</span></strong></p><p class="mt-2 text-slate-300">All selected Key ICs are within their specified thermal limits across all tested configurations.</p></div>`;
             }
             summaryHtml += '<h3 class="text-2xl font-bold mb-4 mt-8">Detailed Component Analysis</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
 
@@ -1209,8 +1220,8 @@
 
         function downloadTableAsPNG(){
              html2canvas(document.getElementById('cobra-table-render').querySelector('table')).then(canvas => {
-                const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
-                a.download = 'cobra-table.png'; a.click();
+                 const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
+                 a.download = 'cobra-table.png'; a.click();
              });
         }
 
@@ -1362,9 +1373,56 @@
                         </div>
                          <p id="mamba-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
                     </div>
+                    <div id="mamba-sheet-selector-section" class="hidden bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                        <h3 class="text-xl font-semibold mb-4 text-white">2. Select Sheet to Analyze</h3>
+                        <select id="mamba-sheet-selector" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition"></select>
+                    </div>
                     <div id="mamba-power-table-section" class="hidden">
-                         <h3 class="text-xl font-semibold mb-4 text-white">2. Processed Power Table</h3>
+                         <h3 class="text-xl font-semibold mb-4 text-white">3. Processed Power Table</h3>
                          <div id="mamba-power-table-container"></div>
+                    </div>
+                    <div id="mamba-ppt-generation-section" class="hidden bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                         <h3 class="text-xl font-semibold mb-4 text-white">4. Generate PowerPoint Report</h3>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="ppt-project-name" class="block text-sm font-medium text-slate-300 mb-1">Project Name</label>
+                                    <input type="text" id="ppt-project-name" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., AP4060 Improvement Study">
+                                </div>
+                                <div>
+                                    <label for="ppt-report-date" class="block text-sm font-medium text-slate-300 mb-1">Report Date</label>
+                                    <input type="date" id="ppt-report-date" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                                </div>
+                                <div>
+                                    <label for="ppt-ambient-temp" class="block text-sm font-medium text-slate-300 mb-1">Ambient Temperature (°C)</label>
+                                    <input type="number" id="ppt-ambient-temp" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" value="25">
+                                </div>
+                                <div>
+                                    <label for="ppt-total-power" class="block text-sm font-medium text-slate-300 mb-1">Total System Power (W)</label>
+                                    <input type="number" id="ppt-total-power" step="0.1" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., 15.5">
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                     <label class="block text-sm font-medium text-slate-300 mb-1">Convection</label>
+                                     <div class="flex gap-4">
+                                        <label class="flex items-center"><input type="radio" name="ppt-convection" value="Natural" class="mr-2 accent-[var(--accent-blue)]" checked>Natural</label>
+                                        <label class="flex items-center"><input type="radio" name="ppt-convection" value="Forced" class="mr-2 accent-[var(--accent-blue)]">Forced</label>
+                                     </div>
+                                </div>
+                                 <div>
+                                     <label class="block text-sm font-medium text-slate-300 mb-1">Orientation</label>
+                                     <div class="flex flex-col gap-2">
+                                        <label class="flex items-center"><input type="radio" name="ppt-orientation" value="Desktop" class="mr-2 accent-[var(--accent-blue)]" checked>Desktop</label>
+                                        <label class="flex items-center"><input type="radio" name="ppt-orientation" value="Wall mount" class="mr-2 accent-[var(--accent-blue)]">Wall mount</label>
+                                        <label class="flex items-center"><input type="radio" name="ppt-orientation" value="Ceiling" class="mr-2 accent-[var(--accent-blue)]">Ceiling</label>
+                                     </div>
+                                </div>
+                            </div>
+                         </div>
+                         <div class="mt-8">
+                            <button id="mamba-generate-ppt" class="w-full bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition shadow-lg shadow-green-500/10">Generate PPT Report</button>
+                         </div>
                     </div>
                 </div>
             `;
@@ -1373,6 +1431,10 @@
         
         function setupMambaEventListeners() {
             document.getElementById('mamba-file-uploader').addEventListener('change', handleMambaFileUpload);
+            const pptButton = document.getElementById('mamba-generate-ppt');
+            if(pptButton) {
+                pptButton.addEventListener('click', generateMambaPpt);
+            }
         }
 
         async function handleMambaFileUpload(event) {
@@ -1381,147 +1443,224 @@
 
             document.getElementById('mamba-file-name').textContent = `File: ${file.name}`;
             loader.classList.remove('hidden');
-            loaderText.textContent = 'Processing Power Data...';
-            
+            loaderText.textContent = 'Reading Excel file...';
+
+            // Hide previous results
+            document.getElementById('mamba-sheet-selector-section').classList.add('hidden');
+            document.getElementById('mamba-power-table-section').classList.add('hidden');
+            document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
+
+
             try {
                 const data = await file.arrayBuffer();
                 const workbook = XLSX.read(data, {type: 'buffer'});
-                const processedData = processPowerData(workbook);
-                
-                if (processedData.error) {
-                    throw new Error(processedData.error);
+                mambaState.workbook = workbook; // Save workbook to state
+
+                if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+                    throw new Error("Excel file contains no sheets.");
                 }
-                
-                renderMambaPowerTable(processedData.headers, processedData.data);
-                document.getElementById('mamba-power-table-section').classList.remove('hidden');
+
+                renderMambaSheetSelector(workbook.SheetNames);
+                document.getElementById('mamba-sheet-selector-section').classList.remove('hidden');
+
+                // Automatically analyze the first sheet by default
+                analyzeMambaSheet(workbook.SheetNames[0]);
 
             } catch (err) {
-                showMessage(`Error processing file: ${err.message}`, 'error');
+                showMessage(`Error reading file: ${err.message}`, 'error');
                 document.getElementById('mamba-file-name').textContent = '';
-                document.getElementById('mamba-power-table-section').classList.add('hidden');
-
             } finally {
                 loader.classList.add('hidden');
             }
         }
 
-        function processPowerData(workbook) {
-            if (!workbook.SheetNames.length) {
-                return { error: "Excel file contains no sheets." };
-            }
+        function renderMambaSheetSelector(sheetNames) {
+            const selectEl = document.getElementById('mamba-sheet-selector');
+            selectEl.innerHTML = '<option value="">-- Select a Sheet --</option>';
+            sheetNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                selectEl.appendChild(option);
+            });
+            selectEl.value = sheetNames[0]; // Pre-select the first sheet
 
-            const sheetName = workbook.SheetNames[0]; 
-            const sheet = workbook.Sheets[sheetName];
-            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-
-            const headerRowIndex = 4; // Row 5 is index 4
-            const headerRow = jsonSheet[headerRowIndex];
-            if (!headerRow) {
-                return { error: "Could not find header row at row 5." };
-            }
-
-            const headerMap = {
-                "Function": 1, // Column B (0-indexed)
-                "Device PN": 3, // Column D
-                "AVG POWER (W)": 5, // Column F
-                "Peak POWER (W)": 6  // Column G
+            selectEl.onchange = (event) => {
+                const selectedSheet = event.target.value;
+                if (selectedSheet && mambaState.workbook) {
+                    analyzeMambaSheet(selectedSheet);
+                } else {
+                    document.getElementById('mamba-power-table-section').classList.add('hidden');
+                    document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
+                }
             };
+        }
+
+        function analyzeMambaSheet(sheetName) {
+            loader.classList.remove('hidden');
+            loaderText.textContent = `Processing sheet: ${sheetName}...`;
+            try {
+                const processedData = processPowerData(mambaState.workbook, sheetName);
+                if (processedData.error) throw new Error(processedData.error);
+                
+                mambaState.analysisResults = processedData; // Save for PPT
+                renderMambaPowerTable(processedData.headers, processedData.data);
+                document.getElementById('mamba-power-table-section').classList.remove('hidden');
+                document.getElementById('mamba-ppt-generation-section').classList.remove('hidden');
+            } catch (err) {
+                 showMessage(`Error processing sheet: ${err.message}`, 'error');
+                 document.getElementById('mamba-power-table-section').classList.add('hidden');
+                 document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function processPowerData(workbook, sheetName) {
+            const headerKeywords = {
+                Function: ["FUNCTION"],
+                DevicePN: ["DEVICE", "P/N"],
+                AvgPower: ["AVG"],
+                PeakPower: ["PEAK"]
+            };
+            const requiredHeaderKeys = ["Function", "DevicePN", "AvgPower"];
             
-            const funcHeader = (headerRow[headerMap["Function"]] || "").toUpperCase();
-            const pnHeader = (headerRow[headerMap["Device PN"]] || "").toUpperCase();
-            const avgHeader = (headerRow[headerMap["AVG POWER (W)"]] || "").toUpperCase();
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) return { error: `Sheet "${sheetName}" not found.` };
+            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
             
-            if (!funcHeader.includes("FUNCTION") || !(pnHeader.includes("DEVICE") && pnHeader.includes("P/N")) || !avgHeader.includes("AVG")) {
-                 return { error: "Headers at B5, D5, or F5 do not contain the expected keywords ('Function', 'Device P/N', 'AVG POWER')." };
+            let headerRowIndex = -1;
+            let colMap = {};
+
+            // Find the header row dynamically
+            for (let i = 0; i < 20 && i < jsonSheet.length; i++) {
+                const row = jsonSheet[i];
+                if (!row) continue;
+                
+                const tempHeaderMap = {};
+                let foundKeywords = new Set();
+
+                row.forEach((cell, j) => {
+                    const cellStr = String(cell || '').toUpperCase();
+                    if (!cellStr) return;
+
+                    for (const key in headerKeywords) {
+                        if (tempHeaderMap[key]) continue;
+                        const kws = headerKeywords[key];
+                        if (kws.every(kw => cellStr.includes(kw))) {
+                            tempHeaderMap[key] = { index: j, name: cell };
+                            foundKeywords.add(key);
+                        }
+                    }
+                });
+
+                if (requiredHeaderKeys.every(key => foundKeywords.has(key))) {
+                    headerRowIndex = i;
+                    colMap = tempHeaderMap;
+                    break;
+                }
+            }
+
+            if (headerRowIndex === -1) {
+                return { error: `A valid header row was not found in sheet "${sheetName}". Ensure it contains 'Function', 'Device P/N', and 'AVG'.` };
             }
             
-            const hasPeakPower = (headerRow[headerMap["Peak POWER (W)"]] || "").toUpperCase().includes("PEAK");
-            
+            const hasPeakPower = !!colMap.PeakPower;
             const dataRows = jsonSheet.slice(headerRowIndex + 1);
-            let nonDcData = [];
-            let dcAvgPowerSum = 0;
-            let dcPeakPowerSum = 0;
+            
+            const poeKeywords = ['BRIDGE', 'POE', 'PSE'];
             const dcKeywords = ['DC', 'LDO'];
             const voltageRegex = /\d+(\.\d+)?V/i;
 
+            let otherComponents = [];
+            let totalPowerSourceRows = [];
+            let poeAvgPowerSum = 0, poePeakPowerSum = 0;
+            let dcAvgPowerSum = 0, dcPeakPowerSum = 0;
+            
             dataRows.forEach(row => {
-                if (!row || row[headerMap["Function"]] === null) return; 
+                if (!row || row[colMap.Function.index] === null) return;
                 
-                const functionName = (row[headerMap["Function"]] || "").toString();
-                const avgPowerVal = row[headerMap["AVG POWER (W)"]];
+                const functionName = String(row[colMap.Function.index] || "");
+                const functionNameUpper = functionName.toUpperCase();
+                const avgPowerVal = row[colMap.AvgPower.index];
                 
-                if (!functionName || avgPowerVal === null || avgPowerVal === '' || isNaN(parseFloat(avgPowerVal))) {
+                if (!functionName.trim() || avgPowerVal === null || avgPowerVal === '' || isNaN(parseFloat(avgPowerVal))) {
+                    return; 
+                }
+
+                if (functionNameUpper.includes('RJ45 WITH TRANSFORMER')) {
                     return;
                 }
 
-                const isDcRow = dcKeywords.some(kw => functionName.toUpperCase().includes(kw)) || voltageRegex.test(functionName);
-
+                if (functionNameUpper.includes('TOTAL POWER')) {
+                    totalPowerSourceRows.push(row);
+                    return;
+                }
+                
+                const isPoeRow = poeKeywords.some(kw => functionNameUpper.includes(kw));
+                if (isPoeRow) {
+                    poeAvgPowerSum += parseFloat(avgPowerVal) || 0;
+                    if (hasPeakPower) poePeakPowerSum += parseFloat(row[colMap.PeakPower.index]) || 0;
+                    return;
+                }
+                
+                const isDcRow = dcKeywords.some(kw => functionNameUpper.includes(kw)) || voltageRegex.test(functionName);
                 if (isDcRow) {
                     dcAvgPowerSum += parseFloat(avgPowerVal) || 0;
-                    if (hasPeakPower) {
-                        dcPeakPowerSum += parseFloat(row[headerMap["Peak POWER (W)"]]) || 0;
-                    }
-                } else {
-                    nonDcData.push(row);
+                    if (hasPeakPower) dcPeakPowerSum += parseFloat(row[colMap.PeakPower.index]) || 0;
+                    return;
                 }
+                
+                otherComponents.push(row);
             });
             
-            const orderedHeaders = [headerRow[headerMap["Function"]], headerRow[headerMap["Device PN"]], headerRow[headerMap["AVG POWER (W)"]]];
-            if(hasPeakPower) orderedHeaders.push(headerRow[headerMap["Peak POWER (W)"]]);
+            const finalHeaders = [colMap.Function.name, colMap.DevicePN.name, colMap.AvgPower.name];
+            if (hasPeakPower) finalHeaders.push(colMap.PeakPower.name);
             
-            let processedData = nonDcData.map(row => {
+            const mapRow = (sourceRow) => {
                 const newRow = {};
-                orderedHeaders.forEach((headerKey, i) => {
-                     const colIndex = Object.values(headerMap)[i];
-                     newRow[headerKey] = row[colIndex];
+                finalHeaders.forEach(headerName => {
+                    const keyName = Object.keys(colMap).find(k => colMap[k].name === headerName);
+                    if (keyName) {
+                        newRow[headerName] = sourceRow[colMap[keyName].index];
+                    }
                 });
                 return newRow;
-            });
+            };
+
+            let processedData = otherComponents.map(mapRow);
             
-            const dcPowerAllRow = {};
+            if (poeAvgPowerSum > 0) {
+                const poePowerAllRow = {};
+                finalHeaders.forEach(h => poePowerAllRow[h] = null);
+                poePowerAllRow[finalHeaders[0]] = "PoE POWER ALL";
+                poePowerAllRow[finalHeaders[2]] = poeAvgPowerSum;
+                if (hasPeakPower) poePowerAllRow[finalHeaders[3]] = poePeakPowerSum;
+                processedData.push(poePowerAllRow);
+            }
+
             if (dcAvgPowerSum > 0) {
-                 orderedHeaders.forEach(h => dcPowerAllRow[h] = null);
-                 dcPowerAllRow[orderedHeaders[0]] = "DC POWER ALL";
-                 dcPowerAllRow[orderedHeaders[2]] = dcAvgPowerSum;
-                 if (hasPeakPower) {
-                     dcPowerAllRow[orderedHeaders[3]] = dcPeakPowerSum;
-                 }
+                const dcPowerAllRow = {};
+                finalHeaders.forEach(h => dcPowerAllRow[h] = null);
+                dcPowerAllRow[finalHeaders[0]] = "DC POWER ALL";
+                dcPowerAllRow[finalHeaders[2]] = dcAvgPowerSum;
+                if (hasPeakPower) dcPowerAllRow[finalHeaders[3]] = dcPeakPowerSum;
+                processedData.push(dcPowerAllRow);
             }
             
-            const reorderedData = [];
-            let femRowFoundAndProcessed = false;
-            processedData.forEach(row => {
-                reorderedData.push(row);
-                const funcName = (row[orderedHeaders[0]] || "").toString().toUpperCase();
-                if (funcName === "FEM" && dcPowerAllRow[orderedHeaders[0]]) {
-                    reorderedData.push(dcPowerAllRow);
-                    femRowFoundAndProcessed = true;
-                }
-            });
-            
-            if (!femRowFoundAndProcessed && dcPowerAllRow[orderedHeaders[0]]) {
-                reorderedData.push(dcPowerAllRow);
+            if (totalPowerSourceRows.length > 0) {
+                 totalPowerSourceRows.sort((a, b) => {
+                    const nameA = String(a[colMap.Function.index] || '').toUpperCase();
+                    const nameB = String(b[colMap.Function.index] || '').toUpperCase();
+                    if (nameA < nameB) return -1;
+                    if (nameA > nameB) return 1;
+                    return 0;
+                }).forEach(sourceRow => {
+                    processedData.push(mapRow(sourceRow));
+                });
             }
-            
-            let totalAvgPower = 0;
-            let totalPeakPower = 0;
-            reorderedData.forEach(row => {
-                totalAvgPower += parseFloat(row[orderedHeaders[2]]) || 0;
-                if(hasPeakPower){
-                    totalPeakPower += parseFloat(row[orderedHeaders[3]]) || 0;
-                }
-            });
 
-            const totalPowerRow = {};
-            orderedHeaders.forEach(h => totalPowerRow[h] = null);
-            totalPowerRow[orderedHeaders[0]] = "Total power";
-            totalPowerRow[orderedHeaders[2]] = totalAvgPower;
-            if (hasPeakPower) {
-                totalPowerRow[orderedHeaders[3]] = totalPeakPower;
-            }
-            reorderedData.push(totalPowerRow);
-
-            return { headers: orderedHeaders, data: reorderedData };
+            return { headers: finalHeaders, data: processedData };
         }
 
         function renderMambaPowerTable(headers, data) {
@@ -1554,6 +1693,11 @@
             const tbody = table.createTBody();
             data.forEach(row => {
                 const tr = tbody.insertRow();
+                const functionName = String(row[headers[0]] || '').toUpperCase();
+                const isTotalRow = functionName.includes('TOTAL POWER');
+                const isDcRow = functionName.includes('DC POWER ALL');
+                const isPoeRow = functionName.includes('POE POWER ALL');
+
                 headers.forEach(h => {
                     const td = tr.insertCell();
                     let cellValue = row[h];
@@ -1564,13 +1708,173 @@
                         cellValue = '';
                     }
                     td.textContent = cellValue;
-                    td.style.padding = '10px'; td.style.border = '1px solid #ccc'; td.style.textAlign = 'center';
-                    td.style.backgroundColor = '#f2f2f2'; td.style.color = '#333';
+                    td.style.padding = '10px'; 
+                    td.style.border = '1px solid #ccc'; 
+                    td.style.textAlign = h.includes('Function') ? 'left' : 'center'; // Align function column left
+                    td.style.backgroundColor = '#f2f2f2'; 
+                    td.style.color = '#333';
+
+                    if(isDcRow || isPoeRow || isTotalRow) {
+                        td.style.fontWeight = 'bold';
+                    }
+                    if(isTotalRow) {
+                        td.style.backgroundColor = '#E2E2E2';
+                    }
                 });
             });
 
             tableContainer.appendChild(table);
         }
+
+        async function generateMambaPpt() {
+             // --- 1. Gather all data and validate ---
+            const projectName = document.getElementById('ppt-project-name').value;
+            let reportDate = document.getElementById('ppt-report-date').value;
+            const ambientTemp = document.getElementById('ppt-ambient-temp').value;
+            const totalPower = document.getElementById('ppt-total-power').value;
+            const convection = document.querySelector('input[name="ppt-convection"]:checked')?.value;
+            const orientation = document.querySelector('input[name="ppt-orientation"]:checked')?.value;
+            
+            if (!projectName || !reportDate || !ambientTemp || !totalPower || !convection || !orientation) {
+                showMessage("Please fill in all fields in the 'Generate PowerPoint Report' section.", "error");
+                return;
+            }
+
+            if (!mambaState.analysisResults || !cobraState.analysisResults) {
+                showMessage("Mamba or Cobra analysis data is missing. Please run analyses in both tools first.", "error");
+                return;
+            }
+            const dateObj = new Date(reportDate + "T00:00:00");
+            const month = dateObj.toLocaleString('en-US', { month: 'long' });
+            const year = dateObj.getFullYear();
+            reportDate = `${month}, ${year}`;
+
+
+            loader.classList.remove('hidden');
+            loaderText.textContent = "Generating report... (1/3)";
+            
+            const cobraResultsArea = document.getElementById('cobra-results-area');
+            const wasCobraResultsHidden = getComputedStyle(cobraResultsArea).display === 'none';
+
+            try {
+                // --- 2. Generate images from HTML elements and Chart.js instance ---
+                loaderText.textContent = "Capturing tables and charts... (2/3)";
+                
+                const mambaTableEl = document.querySelector('#mamba-table-render table');
+                const cobraTableEl = document.querySelector('#cobra-table-render table');
+                const cobraChartInstance = cobraState.chartInstance;
+
+                if (!mambaTableEl || !cobraTableEl || !cobraChartInstance) {
+                    throw new Error("Could not find all necessary tables and charts. Please run both analyses first.");
+                }
+
+                // Temporarily show Cobra results area if it's hidden, to allow for element capture
+                if (wasCobraResultsHidden) {
+                    cobraResultsArea.style.display = 'block';
+                    await new Promise(resolve => setTimeout(resolve, 100)); // allow rendering
+                }
+                
+                // Use the reliable direct export for the chart
+                const cobraChartDataUrl = cobraChartInstance.toBase64Image();
+
+                // Capture tables using html2canvas
+                const [mambaTableCanvas, cobraTableCanvas] = await Promise.all([
+                    html2canvas(mambaTableEl, { scale: 2, backgroundColor: '#FFFFFF' }),
+                    html2canvas(cobraTableEl, { scale: 2, backgroundColor: '#FFFFFF' })
+                ]);
+                
+                const mambaTableDataUrl = mambaTableCanvas.toDataURL("image/png");
+                const cobraTableDataUrl = cobraTableCanvas.toDataURL("image/png");
+                
+                if (!mambaTableDataUrl || !cobraTableDataUrl || !cobraChartDataUrl) {
+                    throw new Error("Image conversion failed. One or more elements could not be captured.");
+                }
+
+                loaderText.textContent = "Assembling PowerPoint slides... (3/3)";
+
+                // --- 3. Create the PowerPoint presentation ---
+                let pptx = new PptxGenJS();
+                pptx.layout = 'LAYOUT_16x9';
+
+                // --- TEMPLATE DEFINITIONS ---
+                const SERCOMM_PPT_TITLE_BG = { color: "002060" };
+                const SERCOMM_PPT_BG_IMAGE_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+gAAAE2CAYAAAB22XMLAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0XztkAAARpSURBVHic7doxAQAwEAOh+Tf8LwY8nAQIeAEsAR0BHTsCOgI6dgR0BHTsCOgI6NgR0BHgwI6Ajh0BHQEb+gQ6Ajp2BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AEb+gR0BHTsCOgI6NgR0BHQAR37AjoCOnYEdAR07AjoCOjYEdABHXsCOgI6dgR0BHTsCOgI6NgR0AGdAA9hBFx1Y5+dAAAAAElFTkSuQmCC';
+                const SERCOMM_PPT_LOGO_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAAAiCAYAAABa2y5WAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAYBSURBVHgB7VzRbhxHFP7srrLgqSgQh+o0VdOVZ/GGh3gAOSk5BUJ4AElOATnFxIULV25AiiA3sJ6oUu2kU/O+y4qss5J1sB3vTN/0zMx4NMy2h4wknWR19unp6Z5/nh90Y+hIeAghBAmPCCGEhIcEAhIeEUIIYUoIYWpICCFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUkIIUxJCSFMSQghTUmIcTfO1/Pz2S/efp0vF3eL8/n91d9Vf/Lz6d/f/VfW2d31bT413349f7z6f73u9d+d782v3n+dny7+B/y5+Nf58+nPfx1+4eHh52svx28/tT9+/v4L/Pn+0/u3n96/ff3p/fsv4eG/r/y98+f7T++fnj/e/PrT+/e/gP/+0/un969+Tf76k5f3r39t/vv3p/efHj9dfv/0/uvfH3/6+f27X+G//hIeX0L/rU+Xf//+9Kefb/8G/l083vxqfvv1p/effk3+9qfrT++fPj9+up6f3r/9FPjL/R9pSBD/4e7X4eHhq7/x5z9d/X39q+t+3//287+P3/wW+D1eM7+an+9+Pf8K+F3D35d3Bf/L/X0JIf7e3M/L4s7L/f38+fTnu19dPz7e/bL7X8XvO7s7Pj6//brs7n7Z3H/Z31d/a/i94fcJ3sH/1W+L+6u/8fH20/unX8LvH+HhaRNC/D1a6sfnq5d3Xy7/Bvw7cT//evbr4feF3U24/b7iP979uvv19NfL/X0JIf6eLDS/mn89//X+68e7j7fH58f7H09Pz67ePz7+vOzp2d1P33b3i992/yv4vbe7P94eHx8fHz/+/+7p+fT86c9Pd0/3d/8q+P0hPG4lhPh3q/x0/fbz9afrL99/uvpy+Otb/Dtwf7x9ef/p/W/wW8H/5X4/IYTwM2j1H3e/Xq6f/p6enp6e/v7rL/f3E0J4SBD/Q/l3wN+a/Pz83W9/hYevTQjhZ9AihBAmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEEKYkhBCmJIQQpiSEECY8I+L7s7tXn66fP/wz+/f+f/3v21y9/f3k5Pn/19Pvz76dPv0M/v4R/R/n+v0V4eHj4G/x6+vL+0/t3v/T19Pz9x9PTp//x6f2rX+P+8e7p+eP920/vn/x6/vn607/x1/tvT+/efgr8N+P++/y+zR8vT88+fz79z4Dfe/L86df/vR+fHt/9uvtHwv3r+fT09Pz0z99/BX8T7hNC+P43DHe/nr9+/L4sT8/Oru/up6ffv4R/R/l794//vfz208v7T7+mP179uv0Tvv9r+L3jN/j/v4Q/v/+K/y/w/l/v/p7+df3L0/vj/W/wO08I4Xfe+r6sv+/v5efn66fr34A/X/8D+Dvw76efP/+7d3cT3v+a/e7x/l+D3wP+X3/ifwP+vvT++3f390/h/6H834F/f+v205//Ov7m379z+e7D8+fXv8Lf/56e7j4J/9V0+vPpv1P/3Yd3j4fP/3p5fx/8f8v973dPhP9K/L/D+/3rL2F4eNoFIV7M57sTPr89fv8L+O8P4d3T/T//evbr/S/wl/un8D/x+V+J/z3ePz4+3d9Pfw/+B/9H/v32eP/n96fPz/+7e//o4fN/ffn+7+G/2v+h+D8Y7t//u7tXvx4f7/78fA3v8Pf/xX8T3r+E/4t3//z9r8TvPz1+uj/5/e1+L+7Xn6/n/11+/7j7+W/Y7/+b8PdP/3/j/hBCAAAAABJRU5ErkJggg==';
+                const SERCOMM_PPT_CONTENT_SIDEBAR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAEsCAYAAAB0i4BMAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJVSURBVHgB7doxTgNBFAbge29g58IdOFkKBTsKxCE4AIdQ6CgGf0IcgANH4ShQUDgLhBC0sJ3ttr38X3knaTKyH8/spC3VmmWVmY2F9h+dlQ2lG1Y2lG5Y2VDeAgI2cAEb+LqA5ePjyf35/Ofj/c1v8PDw9z/9eXt7W34+/3x/e/v94eG/v7398f79P2/vH+Hh/3v7/eP9+/vby/PzP+Hh78vL41/v3/96vj8//P3x8fHzl+/vb28v9/d/vD+/vT3/l5fXf8LPf/7z/Pz+n/+9v99efn49/4X/++P99f3b/eP93b+G3x+f/4Wf//z7l5eXn5+vXv8HPp+/v/7l6+v/+fH+/f3tP+FvYWEB2MCAjRyWAI0kQKMJ0EgCNJoAjSRAowoYyIDNDJaADYw4B2gUAxoNEKb5AnR2dno0/gV0l+Lz/x+gM3O29UuANg14tQADGvEcgAENeI4AAxrwHIEEaDRDmucIdPb3+4sY0FmI//d3gM6cLWpYANCAVwswYBHPAWCAI54DwIAGPEMgQZrmCbT5/N/h+fzt91d/8f/x9vZ2+vP578uPjw+7+z/+/f797eU/w8M/w9vbn/7x35+//wN/f/50/+z+3/7z+ffn3b/8+Hj7ePd3f35+vP3p+uvPj+/+nJ/P//n3Z3//+f7t/g/4+/M/w9//39/u/j7u7ufL9fn+8/3X89t//0v4++X+8/2v6f/g158u/3q+f7l7unz6+/P/D3/vn+/vn/D9/8vv/0e+Jq8nQAAAAABJRU5ErkJggg==';
+
+                // Define Master Slides
+                pptx.defineSlideMaster({
+                    title: "TITLE_MASTER",
+                    background: SERCOMM_PPT_TITLE_BG,
+                    objects: [
+                        { image: { data: SERCOMM_PPT_LOGO_IMAGE, x: 8.5, y: 0.25, w: 1.25, h: 0.23 } },
+                        { image: { data: SERCOMM_PPT_BG_IMAGE_DATA, x: 5.5, y: 2.0, w: 4.5, h: 3.55 } },
+                        { shape: pptx.shapes.LINE, options: { x: 0.5, y: 5.4, w: 2.8, h: 0, line: { color: "C00000", width: 1 } } },
+                        { text: { text: "Sercomm Proprietary and Confidential", options: { x: 3.4, y: 5.45, w: '40%', fontSize: 9, color: 'FFFFFF', align: 'left' } } }
+                    ],
+                });
+
+                pptx.defineSlideMaster({
+                    title: "CONTENT_MASTER",
+                    background: { color: "FFFFFF" },
+                    objects: [
+                        { image: { data: SERCOMM_PPT_CONTENT_SIDEBAR, x: 0, y: 0, w: 0.2, h: '100%' } },
+                        { image: { data: SERCOMM_PPT_LOGO_IMAGE, x: 8.5, y: 0.25, w: 1.25, h: 0.23 } },
+                        { shape: pptx.shapes.LINE, options: { x: 0.5, y: 5.4, w: 9.0, h: 0, line: { color: "C00000", width: 0.75 } } },
+                        { text: { text: "Sercomm Proprietary and Confidential", options: { x: 0.5, y: 5.45, w: '90%', fontSize: 9, color: 'A0A0A0' } } }
+                    ],
+                });
+
+                // Slide 1: Cover Page
+                let slide1 = pptx.addSlide({ masterName: "TITLE_MASTER" });
+                slide1.addText(`Thermal Simulation Report\nProject : ${projectName}`, { x: 0.6, y: 2.5, w: 7, fontSize: 32, bold: true, color: 'FFFFFF' });
+                slide1.addText(reportDate, { x: 0.6, y: 3.5, w: 7, fontSize: 18, color: 'FFFFFF', underline:true });
+                slide1.addText('Sercomm Thermal Team', { x: 0.5, y: 4.8, w: '90%', fontSize: 14, color: 'FFFFFF' });
+                
+                // Slide 2: Simulation Settings
+                let slide2 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
+                slide2.addText('Simulation Settings', { x: 0.5, y: 0.25, w: '90%', fontSize: 24, bold: true, color: '003A63' });
+                const settingsText = [
+                    { text: 'Ambient temperature: ', options: { bold: true } }, { text: `${ambientTemp} °C`},
+                    { text: '\nTotal System Power: ', options: { bold: true } }, { text: `${totalPower} W` },
+                    { text: '\nConvection: ', options: { bold: true } }, { text: convection },
+                    { text: '\nOrientation: ', options: { bold: true } }, { text: orientation }
+                ];
+                slide2.addText(settingsText, { x: 0.75, y: 1.5, w: 8.5, fontSize: 18, color: '363636', bullet: true, paraSpaceAfter: 10 });
+
+                // Slide 3: System Power Consumption
+                let slide3 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
+                slide3.addText('System Power Consumption', { x: 0.5, y: 0.25, w: '90%', fontSize: 24, bold: true, color: '003A63' });
+                slide3.addText(`Total System Power: ${totalPower}W`, { x: 0.5, y: 1.2, w: 4, fontSize: 16, color: '363636' });
+                slide3.addImage({ data: mambaTableDataUrl, sizing: { type: 'contain', w: 5.2, h: 4.2, x: 4.5, y: 1.0 } }); 
+                
+                // Slide 4: Components Results (Table)
+                let slide4 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
+                slide4.addText('Components Results', { x: 0.5, y: 0.25, w: '90%', fontSize: 24, bold: true, color: '003A63' });
+                slide4.addImage({ data: cobraTableDataUrl, sizing: { type: 'contain', w: 9.0, h: 4.5, x: 0.5, y: 1.0 } });
+
+                // Slide 5: Components Results (Chart)
+                let slide5 = pptx.addSlide({ masterName: "CONTENT_MASTER" });
+                slide5.addText('Components Results', { x: 0.5, y: 0.25, w: '90%', fontSize: 24, bold: true, color: '003A63' });
+                slide5.addImage({ data: cobraChartDataUrl, x: 1, y: 1, w: 8, h: 4.5 });
+                
+                // --- 4. Save the file ---
+                await pptx.writeFile({ fileName: `${projectName}_Thermal_Report.pptx` });
+
+                showMessage("PowerPoint report generated successfully!", "success");
+
+            } catch (error) {
+                console.error("Error generating PPT:", error);
+                showMessage(`Failed to generate PowerPoint: ${error.message}`, "error");
+            } finally {
+                // Restore original UI state
+                if (wasCobraResultsHidden) {
+                    cobraResultsArea.style.display = 'none';
+                }
+                loader.classList.add('hidden');
+            }
+        }
+
 
         document.addEventListener('DOMContentLoaded', initializeAndRunApp);
 
