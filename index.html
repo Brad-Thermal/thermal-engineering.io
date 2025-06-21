@@ -23,42 +23,1752 @@
             --accent-green: #30D158;
             --accent-red: #FF453A;
             --accent-cyan: #64D2FF;
+            --ekg-glow-red: #ff3333;
+            --ekg-grid-green: #33ff33;
         }
         body {  
             font-family: 'Inter', sans-serif;  
             background-color: var(--bg-dark);
             color: var(--text-primary);
         }
+        .view { transition: opacity 0.3s ease-in-out; }
         .hidden { display: none !important; }
+        #message-box {
+            position: fixed; top: 20px; right: 20px; padding: 1rem; border-radius: 0.5rem; color: white;
+            z-index: 10000; opacity: 0; transform: translateY(-20px); transition: opacity 0.3s, transform 0.3s;
+        }
+        #message-box.show { opacity: 1; transform: translateY(0); }
+        #message-box.success { background-color: var(--accent-green); }
+        #message-box.error { background-color: var(--accent-red); }
+        #message-box.info { background-color: var(--accent-blue); }
+        
+        .st-tabs-container { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; overflow-x: auto; }
+        .st-tab { padding: 0.75rem 0.25rem; margin-right: 1.5rem; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; white-space: nowrap;}
+        .st-tab.active { color: var(--accent-blue); border-color: var(--accent-blue); font-weight: 500;}
+        .st-tab-content { display: none; animation: fadeIn 0.5s; }
+        .st-tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .data-editor-table { width: 100%; min-width: 600px; border-collapse: collapse; margin-top: 1rem; }
+        .data-editor-table th, .data-editor-table td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; word-wrap: break-word; }
+        .data-editor-table th { background-color: var(--bg-lighter); font-size: 0.8rem; vertical-align: middle; text-align: center; white-space: nowrap; }
+        .data-editor-table td { background-color: var(--bg-light); }
+        .data-editor-table input, .data-editor-table select {  
+            background-color: var(--bg-dark);  
+            border: 1px solid var(--border-color);  
+            width: 100%;  
+            padding: 0.5rem;  
+            border-radius: 0.375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .data-editor-table input:focus, .data-editor-table select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.3);
+        }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .multiselect-container { max-height: 200px; overflow-y: auto; background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 0.5rem;}
+        .multiselect-container label { display: block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; transition: background-color 0.2s;}
+        .multiselect-container label:hover { background-color: var(--bg-lighter); }
+        .tool-selector.active { background-color: var(--accent-blue); color: white; }
+
+        @media (max-width: 767px) {
+            .data-editor-table { min-width: 100%; }
+            .data-editor-table thead { display: none; }
+            .data-editor-table tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+            .data-editor-table td { display: block; text-align: right; position: relative; padding-left: 50%; border: none; border-bottom: 1px solid var(--border-color); }
+            .data-editor-table td:last-child { border-bottom: none; }
+            .data-editor-table td::before { content: attr(data-label); position: absolute; left: 0.75rem; width: calc(50% - 1.5rem); text-align: left; font-weight: bold; white-space: nowrap; color: var(--text-secondary); }
+        }
+
+        /* --- EKG Loader Animation Styles (1s) --- */
+        .ekg-loader {
+            position: relative;
+            width: 250px;
+            height: 120px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right, rgba(51, 255, 51, 0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(51, 255, 51, 0.2) 1px, transparent 1px);
+            animation: pulse-grid 1s infinite ease-in-out;
+            mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, black 60%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, black 60%, transparent 100%);
+        }
+        .ekg-loader svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .ekg-line {
+            stroke: var(--ekg-glow-red);
+            stroke-width: 2.5;
+            fill: none;
+            stroke-dasharray: 450;
+            stroke-dashoffset: 450;
+            animation: draw-ekg 1s infinite linear;
+            filter: drop-shadow(0 0 3px var(--ekg-glow-red)) drop-shadow(0 0 6px rgba(255, 51, 51, 0.5));
+        }
+        .pulse-dot {
+            fill: white;
+            stroke: var(--ekg-glow-red);
+            stroke-width: 2;
+            animation: move-dot 1s infinite linear;
+            filter: drop-shadow(0 0 5px white);
+        }
+
+        @keyframes draw-ekg { to { stroke-dashoffset: 0; } }
+        @keyframes move-dot {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        @keyframes pulse-grid {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        /* --- End of Loader Styles --- */
+
     </style>
 </head>
-<body>
-    <div id="loader" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 hidden">...</div>
-    <div id="message-box"></div>
-    <div id="app-wrapper" class="w-full h-screen hidden">
+<body class="text-slate-200">
+
+    <div id="loader" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-[10001] hidden">
+        <div class="ekg-loader rounded-lg shadow-2xl shadow-red-500/10">
+            <div class="grid-background"></div>
+            <svg viewBox="0 0 250 120">
+                <path class="ekg-line" d="M0 60 H40 L50 80 L60 40 L65 65 L70 55 L75 60 L100 60 L110 50 L120 75 L130 30 L135 60 L160 60 L170 85 L180 60 L190 60 H250" />
+                <circle class="pulse-dot" r="3">
+                    <animateMotion dur="1s" repeatCount="indefinite" path="M0 60 H40 L50 80 L60 40 L65 65 L70 55 L75 60 L100 60 L110 50 L120 75 L130 30 L135 60 L160 60 L170 85 L180 60 L190 60 H250" />
+                </circle>
+            </svg>
         </div>
+        <p id="loader-text" class="mt-8 text-lg font-mono tracking-widest text-[var(--ekg-glow-red)] animate-pulse">ANALYZING SYSTEM PULSE...</p>
+    </div>
+
+
+    <div id="message-box"></div>
+
+    <div id="app-wrapper" class="w-full h-screen hidden">
+        
+        <div id="auth-view" class="view flex items-center justify-center h-full" style="background-color: var(--bg-dark);">
+            <div class="w-full max-w-sm mx-auto p-4">
+                <div class="bg-transparent p-8">
+                    <div class="text-center mb-8">
+                        <h1 class="text-4xl font-bold text-white">Sercomm Tool Suite</h1>
+                        <p class="text-slate-400 mt-2">Thermal Engineering Platform</p>
+                    </div>
+                    <form id="login-form" class="space-y-6">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-slate-400 mb-2">Company Email</label>
+                            <input type="email" id="login-email" required class="w-full px-4 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-slate-400 mb-2">Password</label>
+                            <input type="password" id="login-password" required class="w-full px-4 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                        </div>
+                        <button type="submit" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg transition duration-300">Login</button>
+                    </form>
+                    <div class="text-center mt-6">
+                        <p class="text-sm text-slate-400">New user? <a href="#" id="show-register" class="font-medium text-[var(--accent-blue)] hover:underline">Request an account</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="register-view" class="view hidden flex items-center justify-center h-full" style="background-color: var(--bg-dark);">
+            <div class="w-full max-w-sm mx-auto p-4">
+                <div class="bg-transparent p-8">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold text-white">Create New Account</h1>
+                        <p class="text-slate-400 mt-2">Please use your company email</p>
+                    </div>
+                    <form id="register-form" class="space-y-6">
+                        <div>
+                            <label for="register-email" class="block text-sm font-medium text-slate-400 mb-2">Company Email</label>
+                            <input type="email" id="register-email" required class="w-full px-4 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                        </div>
+                        <div>
+                            <label for="register-password" class="block text-sm font-medium text-slate-400 mb-2">Set Password</label>
+                            <input type="password" id="register-password" required minlength="6" class="w-full px-4 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                        </div>
+                        <button type="submit" class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg transition duration-300">Submit Request</button>
+                    </form>
+                    <div class="text-center mt-6">
+                        <p class="text-sm text-slate-400">Already have an account? <a href="#" id="show-login" class="font-medium text-[var(--accent-blue)] hover:underline">Back to Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-app-view" class="view hidden h-screen lg:flex relative">
+            <aside id="main-sidebar" class="w-64 p-6 flex flex-col fixed lg:relative inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" style="background-color: #000;">
+                <h2 class="text-lg font-bold text-white mb-10">
+                    <div>Sercomm</div>
+                    <div>Thermal Engineering</div>
+                </h2>
+                <nav class="flex flex-col space-y-2">
+                    <a href="#" id="tool-cobra" class="tool-selector flex items-center p-3 rounded-lg text-slate-300 hover:bg-white/10">
+                        <svg class="w-6 h-6 mr-3" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 95 C 20 95, 10 75, 25 60 C 35 50, 65 50, 75 60 C 90 75, 80 95, 60 95 L 40 95 Z" fill="#2C7873"/><path d="M50 70 C 25 70, 25 40, 50 20 C 75 40, 75 70, 50 70 Z" fill="#4A938E" stroke="#FFFFFF" stroke-width="2"/><path d="M50 20 C 40 30, 40 50, 50 60 C 60 50, 60 30, 50 20" fill="#1E1E1E"/><circle cx="46" cy="45" r="4" fill="red"/><circle cx="54" cy="45" r="4" fill="red"/><path d="M48 62 L52 62 L50 70 Z" fill="#FFD700"/></svg>
+                        Cobra
+                    </a>
+                    <a href="#" id="tool-viper" class="tool-selector flex items-center p-3 rounded-lg text-slate-300 hover:bg-white/10">
+                        <svg class="w-6 h-6 mr-3" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg>
+                        Viper
+                    </a>
+                    <a href="#" id="tool-mamba" class="tool-selector flex items-center p-3 rounded-lg text-slate-300 hover:bg-white/10">
+                       <svg class="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 21C4 17.134 7.13401 14 11 14C14.866 14 18 17.134 18 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14V3L15 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 21C8 19.3431 9.34315 18 11 18C12.6569 18 14 19.3431 14 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8.02864C8.42398 7.37341 9.06649 6.88373 9.80554 6.6212M14.2233 4.85854C13.593 4.30202 12.825 3.93115 12 3.7915" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Mamba
+                    </a>
+                </nav>
+                <div class="mt-auto">
+                    <p class="text-sm text-slate-400 truncate mb-4" id="user-email-display"></p>
+                    <button id="admin-panel-button" class="hidden w-full mt-2 bg-amber-500/80 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Admin Panel</button>
+                    <button id="logout-button" class="w-full mt-2 bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Logout</button>
+                </div>
+            </aside>
+            <div id="sidebar-overlay" class="hidden lg:hidden fixed inset-0 bg-black/50 z-20"></div>
+
+            <main class="flex-1 w-full lg:w-auto p-4 md:p-6 lg:p-10 overflow-y-auto" style="background-color: var(--bg-dark);">
+                <header class="lg:hidden flex items-center justify-between mb-6">
+                    <button id="hamburger-menu-button" class="p-2 rounded-md hover:bg-white/10">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h1 id="mobile-tool-title" class="text-xl font-bold">Cobra</h1>
+                    <div></div>
+                </header>
+                
+                <div id="cobra-ui" class="tool-ui hidden"></div>
+                <div id="viper-ui" class="tool-ui hidden"></div>
+                <div id="mamba-ui" class="tool-ui hidden"></div>
+            </main>
+        </div>
+
+        <div id="admin-panel-view" class="view hidden p-4 md:p-10" style="background-color: var(--bg-dark);">
+            <header class="p-4 mb-6 flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold">Admin Panel</h1>
+                <button id="back-to-app-button" class="bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Back to App</button>
+            </header>
+            <main class="bg-[var(--bg-light)] p-4 md:p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-6">User Account Management</h2>
+                <div class="overflow-x-auto"><table class="w-full"><thead class="bg-black/20"><tr><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Email</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Role</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Status</th><th class="p-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Actions</th></tr></thead><tbody id="user-list-body" class="divide-y divide-[var(--border-color)]"></tbody></table></div>
+            </main>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <script>
-        // 為節省篇幅，此處省略您已有的 JS 程式碼，請確保您的 JS 程式碼與之前提供的最新版本相同
+        // Global variables
+        let currentUserData = null;
+        let auth, db;
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loader-text');
+        const appWrapper = document.getElementById('app-wrapper');
+        const views = { auth: document.getElementById('auth-view'), register: document.getElementById('register-view'), main: document.getElementById('main-app-view'), admin: document.getElementById('admin-panel-view') };
+        const messageBox = document.getElementById('message-box');
+        
+        // Function to switch between different views
+        function showView(viewName) {
+            window.scrollTo(0, 0); // Scroll to top on every view change
+            Object.keys(views).forEach(key => {
+                const shouldBeHidden = key !== viewName;
+                if (shouldBeHidden) {
+                    views[key].classList.add('hidden');
+                } else {
+                    views[key].classList.remove('hidden');
+                }
+            });
+            appWrapper.classList.remove('hidden');
+            if (viewName === 'auth' || viewName === 'register') {
+                loader.classList.add('hidden');
+            }
+        }
 
-        // *** 請確保您的 generateMambaPptWithBackend 和 captureAllImagesForPPT 函式是以下最新版本 ***
+        // Function to display a message to the user
+        function showMessage(text, type = 'info') {
+            messageBox.textContent = text;
+            messageBox.className = 'show';
+            messageBox.classList.add(type);
+            setTimeout(() => messageBox.classList.remove('show'), 5000);
+        }
+
+        // Main application initialization function
+        async function initializeAndRunApp() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyC104s4ck9kSwREUvuE9chFaSokBPBWdwU", // Replace with your actual Firebase config
+                authDomain: "thermal-engineering-67354.firebaseapp.com",
+                projectId: "thermal-engineering-67354",
+                storageBucket: "thermal-engineering-67354.appspot.com",
+                messagingSenderId: "407236469979",
+                appId: "1:407236469979:web:53ce41f79b2d5b6721d8fe",
+                measurementId: "G-9HKXSTC6LE"
+            };
+
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
+                loaderText.textContent = 'Error: Firebase configuration is missing.';
+                loaderText.classList.add('text-red-400');
+                if(document.querySelector('.ekg-loader')) document.querySelector('.ekg-loader').style.display = 'none';
+                loader.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                loaderText.textContent = `Error: Could not initialize backend services. ${error.message}`;
+                loaderText.classList.add('text-red-400');
+                if(document.querySelector('.ekg-loader')) document.querySelector('.ekg-loader').style.display = 'none';
+                return;
+            }
+            
+            // Listen for authentication state changes
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    checkUserStatusAndData(user);
+                } else {
+                    currentUserData = null;
+                    showView('auth');
+                }
+            });
+
+            // Setup all event listeners
+            setupFormEventListeners();
+            setupGlobalEventListeners();
+            setupMobileNavEventListeners(); 
+        }
+
+        // Check user status and fetch their data from Firestore
+        async function checkUserStatusAndData(user) {
+            const startTime = Date.now();
+            if (!user.email) { 
+                showView('auth'); 
+                return; 
+            }
+            const userDocRef = db.collection("users").doc(user.uid);
+            try {
+                const docSnap = await userDocRef.get();
+                if (docSnap.exists && docSnap.data().isActive) {
+                    currentUserData = { uid: user.uid, ...docSnap.data() };
+                    document.getElementById('user-email-display').textContent = currentUserData.email;
+                    document.getElementById('admin-panel-button').classList.toggle('hidden', currentUserData.role !== 'admin');
+                    if (currentUserData.role === 'admin') listenForUserUpdates();
+                    initializeSercommSuite(currentUserData);
+                    showView('main');
+                } else {
+                    showMessage("Account is pending approval or has been deactivated.", "info");
+                    auth.signOut();
+                }
+            } catch (error) { 
+                console.error("Error fetching user data:", error); 
+                showMessage("Error reading user data.", "error"); 
+                auth.signOut(); 
+            } finally {
+                const elapsedTime = Date.now() - startTime;
+                const minimumDisplayTime = 1000;
+                const remainingTime = Math.max(0, minimumDisplayTime - elapsedTime);
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                }, remainingTime);
+            }
+        }
+
+        // Handles login and registration form submissions
+        function setupFormEventListeners() {
+            document.getElementById('login-form').addEventListener('submit', async (e) => { 
+                e.preventDefault(); 
+                loader.classList.remove('hidden'); 
+                try { 
+                    await auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value); 
+                } catch (error) { 
+                    showMessage("Login failed. Please check your credentials.", "error"); 
+                    loader.classList.add('hidden'); 
+                } 
+            });
+            
+            document.getElementById('register-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loader.classList.remove('hidden');
+                loaderText.textContent = "Submitting application...";
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const allowedDomain = "sercomm.com";
+                const isAllowedDomain = email.toLowerCase().endsWith(`@${allowedDomain}`);
+
+                try {
+                    const cred = await auth.createUserWithEmailAndPassword(email, password);
+                    await db.collection("users").doc(cred.user.uid).set({
+                        email: cred.user.email,
+                        role: 'user',
+                        isActive: isAllowedDomain,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    if (isAllowedDomain) {
+                        showMessage("Registration successful! Your account is active. Please log in.", "success");
+                    } else {
+                        showMessage("Application submitted! Your account is pending admin approval.", "info");
+                    }
+                    auth.signOut();
+                    showView('auth');
+                } catch (error) {
+                    showMessage(error.code === 'auth/email-already-in-use' ? "This email is already registered." : "Registration failed. Please try again.", "error");
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Handles global click events for navigation and actions using event delegation
+        function setupGlobalEventListeners() {
+            document.body.addEventListener('click', async (e) => {
+                const target = e.target;
+                const targetId = target.id;
+                
+                switch(targetId) {
+                    case 'admin-panel-button':
+                        showView('admin');
+                        break;
+                    case 'back-to-app-button':
+                        showView('main');
+                        break;
+                    case 'logout-button':
+                        auth.signOut();
+                        break;
+                    case 'show-register':
+                        e.preventDefault();
+                        showView('register');
+                        break;
+                    case 'show-login':
+                        e.preventDefault();
+                        showView('auth');
+                        break;
+                }
+
+                if (target.classList.contains('toggle-active-btn')) {
+                    const userId = target.dataset.id;
+                    const isActive = target.dataset.active === 'true';
+
+                    if (auth.currentUser && userId === auth.currentUser.uid && isActive) { 
+                        showMessage("You cannot deactivate your own account.", "error"); 
+                        return; 
+                    }
+                    try {
+                        await db.collection("users").doc(userId).update({ isActive: !isActive });
+                        showMessage(`User status updated.`, "success");
+                    } catch (err) {
+                        showMessage(`Error updating user: ${err.message}`, "error");
+                    }
+                }
+            });
+        }
+        
+        // Sets up event listeners for mobile navigation
+        function setupMobileNavEventListeners() {
+            const hamburgerBtn = document.getElementById('hamburger-menu-button');
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const toggleSidebar = () => {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            };
+            hamburgerBtn.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            document.querySelectorAll('#main-sidebar .tool-selector').forEach(selector => {
+                selector.addEventListener('click', () => {
+                    if (window.innerWidth < 1024) { 
+                        toggleSidebar();
+                    }
+                });
+            });
+        }
+
+        // Listens for real-time updates to the user list for the admin panel
+        let unsubscribeUserList; 
+        function listenForUserUpdates() {
+            if (unsubscribeUserList) unsubscribeUserList();
+            unsubscribeUserList = db.collection("users").onSnapshot((snapshot) => {
+                const userListBody = document.getElementById('user-list-body');
+                if (!userListBody) return;
+                
+                const users = [];
+                snapshot.forEach(docSnap => {
+                    users.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Sort on the client side
+                users.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis() || 0;
+                    const timeB = b.createdAt?.toMillis() || 0;
+                    return timeB - timeA; // Descending
+                });
+
+                userListBody.innerHTML = '';
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    const activeText = user.isActive ? 'Active' : 'Inactive';
+                    const activeClass = user.isActive ? 'text-green-400' : 'text-yellow-400';
+                    const toggleActiveText = user.isActive ? 'Deactivate' : 'Activate';
+                    tr.innerHTML = `<td class="p-3 text-sm text-slate-300">${user.email}</td><td class="p-3 text-sm text-slate-300">${user.role}</td><td class="p-3 text-sm font-medium ${activeClass}">${activeText}</td><td class="p-3 text-sm font-medium space-x-2"><button data-id="${user.id}" data-active="${user.isActive}" class="toggle-active-btn text-white px-3 py-1 text-xs rounded transition ${user.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}">${toggleActiveText}</button></td>`;
+                    userListBody.appendChild(tr);
+                });
+
+            }, (error) => {
+                console.error("Error listening to user updates: ", error);
+                showMessage("Could not load user list for admin panel.", "error");
+            });
+        }
+
+        // Initializes the main application UI (Viper, Cobra, and Mamba tools)
+        function initializeSercommSuite(user) {
+            renderViperUI();
+            renderCobraUI();
+            renderMambaUI();
+            const mobileToolTitle = document.getElementById('mobile-tool-title');
+            document.querySelectorAll('.tool-selector').forEach(selector => {
+                selector.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.tool-selector').forEach(s => s.classList.remove('active'));
+                    selector.classList.add('active');
+                    document.querySelectorAll('.tool-ui').forEach(ui => ui.classList.add('hidden'));
+                    const toolId = selector.id.replace('tool-', '') + '-ui';
+                    document.getElementById(toolId).classList.remove('hidden');
+                    const toolName = selector.textContent.trim();
+                    mobileToolTitle.textContent = toolName;
+                });
+            });
+            document.getElementById('tool-cobra').click(); 
+        }
+        
+        // Renders the Viper tool UI
+        function renderViperUI() {
+            const viperUI = document.getElementById('viper-ui');
+            const inputClasses = "w-full px-3 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition";
+            const labelClasses = "block text-sm font-medium text-slate-400 mb-2";
+            viperUI.innerHTML = `<div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                                         <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg></div>
+                                         <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Viper</h1><p class="text-slate-400 mt-0">Thermal Risk Analysis</p></div>
+                                     </div>
+                                     <div id="viper-tabs" class="st-tabs-container">
+                                         <button data-tab="nat-conv" class="st-tab active">🍃 Natural Convection</button>
+                                         <button data-tab="force-conv" class="st-tab">🌬️ Forced Convection</button>
+                                         <button data-tab="solar-rad" class="st-tab">☀️ Solar Radiation</button>
+                                     </div>
+                                     <div id="nat-conv-content" class="st-tab-content active">
+                                         <h2 class="text-xl md:text-2xl font-bold mb-6">Passive Cooling Power Estimator</h2>
+                                         <div class="grid md:grid-cols-2 gap-8">
+                                             <div class="space-y-6">
+                                                 <h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3>
+                                                 <div><label for="nc_mat" class="${labelClasses}">Enclosure Material</label><select id="nc_mat" class="${inputClasses}"><option value="Plastic (ABS/PC)">Plastic (ABS/PC)</option><option value="Aluminum (Anodized)">Aluminum (Anodized)</option></select></div>
+                                                 <div>
+                                                     <label class="${labelClasses}">Product Dimensions (mm)</label>
+                                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                         <input type="number" id="nc_l" value="200.0" class="${inputClasses}" placeholder="Length (L)">
+                                                         <input type="number" id="nc_w" value="150.0" class="${inputClasses}" placeholder="Width (W)">
+                                                         <input type="number" id="nc_h" value="50.0" class="${inputClasses}" placeholder="Height (H)">
+                                                     </div>
+                                                 </div>
+                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                     <div>
+                                                         <label for="nc_ta" class="${labelClasses}">Ambient Temp. (°C)</label>
+                                                         <input type="number" id="nc_ta" value="25" class="${inputClasses}">
+                                                     </div>
+                                                     <div>
+                                                         <label for="nc_ts" class="${labelClasses}">Max. Surface Temp. (°C)</label>
+                                                         <input type="number" id="nc_ts" value="50" class="${inputClasses}">
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                             <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg">
+                                                 <h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3>
+                                                 <div id="nc-results" class="space-y-4"></div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div id="force-conv-content" class="st-tab-content">
+                                         <h2 class="text-xl md:text-2xl font-bold mb-6">Active Cooling Airflow Estimator</h2>
+                                         <div class="grid md:grid-cols-2 gap-8">
+                                             <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="fc_power_q" class="${labelClasses}">Power to Dissipate (Q, W)</label><input type="number" id="fc_power_q" value="50.0" class="${inputClasses}"></div><div><label for="fc_tin" class="${labelClasses}">Inlet Air Temp (Tin, °C)</label><input type="number" id="fc_tin" value="25" class="${inputClasses}"></div><div><label for="fc_tout" class="${labelClasses}">Max. Outlet Temp (Tout, °C)</label><input type="number" id="fc_tout" value="45" class="${inputClasses}"></div></div>
+                                             <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="fc-results" class="space-y-4"></div></div>
+                                         </div>
+                                     </div>
+                                     <div id="solar-rad-content" class="st-tab-content">
+                                         <h2 class="text-xl md:text-2xl font-bold mb-6">Solar Heat Gain Estimator</h2>
+                                         <div class="grid md:grid-cols-2 gap-8">
+                                             <div class="space-y-6"><h3 class="text-lg md:text-xl font-semibold">Input Parameters</h3><div><label for="solar_mat" class="${labelClasses}">Enclosure Color/Finish</label><select id="solar_mat" class="${inputClasses}"><option value="0.25">White (Paint)</option><option value="0.40">Silver (Paint)</option><option value="0.80">Dark Gray</option><option value="0.95" selected>Black (Plastic/Paint)</option><option value="custom">Other...</option></select><input type="number" id="solar_alpha_custom" value="0.5" class="${inputClasses} mt-2 hidden" placeholder="Custom Absorptivity (α)"></div><div><label for="solar_area" class="${labelClasses}">Projected Surface Area (mm²)</label><input type="number" id="solar_area" value="30000" class="${inputClasses}"></div><div><label for="solar_irradiance" class="${labelClasses}">Solar Irradiance (W/m²)</label><input type="number" id="solar_irradiance" value="1000" class="${inputClasses}"></div></div>
+                                             <div class="bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"><h3 class="text-lg md:text-xl font-semibold mb-4">Evaluation Result</h3><div id="solar-results" class="space-y-4"></div></div>
+                                         </div>
+                                     </div>`;
+            setupViperEventListeners();
+        }
+        
+        // Sets up event listeners for the Viper tool
+        function setupViperEventListeners() {
+            const tabs = document.querySelectorAll('#viper-tabs .st-tab');
+            const contents = document.querySelectorAll('#viper-ui .st-tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const targetId = tab.dataset.tab + '-content';
+                    contents.forEach(c => c.classList.toggle('active', c.id === targetId));
+                });
+            });
+            ['nc_mat', 'nc_l', 'nc_w', 'nc_h', 'nc_ta', 'nc_ts'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplayNC));
+            ['fc_power_q', 'fc_tin', 'fc_tout'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplayFC));
+            ['solar_mat', 'solar_alpha_custom', 'solar_area', 'solar_irradiance'].forEach(id => document.getElementById(id)?.addEventListener('input', calculateAndDisplaySolar));
+            document.getElementById('solar_mat').addEventListener('change', (e) => { document.getElementById('solar_alpha_custom').classList.toggle('hidden', e.target.value !== 'custom'); });
+            calculateAndDisplayNC(); calculateAndDisplayFC(); calculateAndDisplaySolar();
+        }
+        
+        // Calculations for Viper tool
+        function calculateAndDisplayNC() {
+            const materials = { "Plastic (ABS/PC)": {emissivity: 0.90, k_uniform: 0.65}, "Aluminum (Anodized)": {emissivity: 0.85, k_uniform: 0.90} };
+            const [L, W, H, Ta, Ts_peak] = ['nc_l', 'nc_w', 'nc_h', 'nc_ta', 'nc_ts'].map(id => parseFloat(document.getElementById(id).value));
+            const material_props = materials[document.getElementById('nc_mat').value];
+            const resultsDiv = document.getElementById('nc-results');
+            if (Ts_peak <= Ta) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Max. Surface Temp (Ts) must be higher than Ambient Temp (Ta).</p>`; return; }
+            if (L <= 0 || W <= 0 || H <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Product dimensions (L, W, H) must be greater than zero.</p>`; return; }
+            const STEFAN_BOLTZMANN_CONST = 5.67e-8, EPSILON = 1e-9, BUILT_IN_SAFETY_FACTOR = 0.9, { emissivity, k_uniform } = material_props;
+            const Ts_eff = Ta + (Ts_peak - Ta) * k_uniform, delta_T_eff = Ts_eff - Ta, [L_m, W_m, H_m] = [L/1000, W/1000, H/1000];
+            const A_total = 2 * (L_m*W_m + L_m*H_m + W_m*H_m), T_film = (Ts_eff + Ta) / 2, [k_air, nu_air, pr_air, g] = [0.0275, 1.85e-5, 0.72, 9.81];
+            const beta = 1 / (T_film + 273.15 + EPSILON), Lc_vert = H_m, Lc_horiz = (L_m * W_m) / (2 * (L_m + W_m) + EPSILON);
+            const Ra_vert = (g*beta*delta_T_eff*Lc_vert**3)/(nu_air**2)*pr_air, Ra_horiz = (g*beta*delta_T_eff*Lc_horiz**3)/(nu_air**2)*pr_air;
+            const Nu_vert = (0.825 + (0.387 * Math.abs(Ra_vert)**(1/6)) / (1 + (0.492/pr_air)**(9/16))**(8/27))**2;
+            let Nu_top = 1.0; if (Ra_horiz >= 1e4 && Ra_horiz <= 1e7) Nu_top = 0.54 * Ra_horiz**(1/4); else if (Ra_horiz > 1e7) Nu_top = 0.15 * Ra_horiz**(1/3);
+            const Nu_bottom = 0.27 * Math.abs(Ra_horiz)**(1/4);
+            const h_vert = (Nu_vert*k_air)/(Lc_vert+EPSILON), h_top = (Nu_top*k_air)/(Lc_horiz+EPSILON), h_bottom = (Nu_bottom*k_air)/(Lc_horiz+EPSILON);
+            const Q_conv_total = ((h_top*L_m*W_m)+(h_bottom*L_m*W_m)+h_vert*2*(L_m*H_m+W_m*H_m))*delta_T_eff;
+            const Ts_eff_K = Ts_eff + 273.15, Ta_K = Ta + 273.15, Q_rad = emissivity * STEFAN_BOLTZMANN_CONST * A_total * (Ts_eff_K**4 - Ta_K**4);
+            const Q_final = (Q_conv_total + Q_rad) * BUILT_IN_SAFETY_FACTOR;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">📐 Surface Area</p><p class="text-2xl font-bold">${A_total.toFixed(4)} m²</p></div><div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">✅ Max. Dissipatable Power</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${Q_final.toFixed(1)} W</p><p class="text-xs text-slate-500 mt-1">Includes material uniformity and a fixed engineering safety factor (0.9).</p></div>`;
+        }
+        function calculateAndDisplayFC() {
+            const [power_q, T_in, T_out] = ['fc_power_q', 'fc_tin', 'fc_tout'].map(id => parseFloat(document.getElementById(id).value));
+            const resultsDiv = document.getElementById('fc-results');
+            if (T_out <= T_in) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Outlet Temperature must be higher than Inlet Temperature.</p>`; return; }
+            if (power_q <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Power to be dissipated must be greater than zero.</p>`; return; }
+            const AIR_SPECIFIC_HEAT_CP = 1006, AIR_DENSITY_RHO = 1.225, M3S_TO_CFM_CONVERSION = 2118.88;
+            const delta_T = T_out - T_in, mass_flow_rate = power_q / (AIR_SPECIFIC_HEAT_CP * delta_T);
+            const volume_flow_rate_m3s = mass_flow_rate / AIR_DENSITY_RHO, cfm = volume_flow_rate_m3s * M3S_TO_CFM_CONVERSION;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">🌬️ Required Airflow</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${cfm.toFixed(1)} CFM</p><p class="text-xs text-slate-500 mt-1">CFM: Cubic Feet per Minute.</p></div>`;
+        }
+        function calculateAndDisplaySolar() {
+            const matSelect = document.getElementById('solar_mat'); let alpha = parseFloat(matSelect.value);
+            if (matSelect.value === 'custom') alpha = parseFloat(document.getElementById('solar_alpha_custom').value) || 0;
+            const [projected_area_mm2, solar_irradiance] = ['solar_area', 'solar_irradiance'].map(id => parseFloat(document.getElementById(id).value));
+            const resultsDiv = document.getElementById('solar-results');
+            if (projected_area_mm2 <= 0) { resultsDiv.innerHTML = `<p class="text-red-400">Error: Projected Surface Area must be greater than zero.</p>`; return; }
+            const projected_area_m2 = projected_area_mm2 / 1_000_000, solar_gain = alpha * projected_area_m2 * solar_irradiance;
+            resultsDiv.innerHTML = `<div class="bg-[var(--bg-dark)] p-4 rounded-lg"><p class="text-sm text-slate-400">☀️ Absorbed Solar Heat Gain</p><p class="text-2xl font-bold text-[var(--accent-blue)]">${solar_gain.toFixed(1)} W</p></div>`;
+        }
+        
+        // Cobra tool specific state and functions
+        const cobraState = {};
+
+        function renderCobraUI() {
+            const cobraUI = document.getElementById('cobra-ui');
+            cobraUI.innerHTML = `
+                <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                    <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 95 C 20 95, 10 75, 25 60 C 35 50, 65 50, 75 60 C 90 75, 80 95, 60 95 L 40 95 Z" fill="#2C7873"/><path d="M50 70 C 25 70, 25 40, 50 20 C 75 40, 75 70, 50 70 Z" fill="#4A938E" stroke="#FFFFFF" stroke-width="2"/><path d="M50 20 C 40 30, 40 50, 50 60 C 60 50, 60 30, 50 20" fill="#1E1E1E"/><circle cx="46" cy="45" r="4" fill="red"/><circle cx="54" cy="45" r="4" fill="red"/><path d="M48 62 L52 62 L50 70 Z" fill="#FFD700"/></svg></div>
+                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Transformation & Analysis</p></div>
+                </div>
+
+                <div id="cobra-setup-area" class="space-y-8">
+                    <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                        <h3 class="text-xl font-semibold mb-4 text-white">1. Upload Data File</h3>
+                        <div class="flex items-center gap-4">
+                            <label for="cobra-file-uploader" class="flex-grow cursor-pointer bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Excel File</label>
+                            <input type="file" id="cobra-file-uploader" class="hidden" accept=".xlsx, .xls">
+                             <button id="cobra-remove-file" class="bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Remove</button>
+                        </div>
+                         <p id="cobra-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
+                    </div>
+
+                    <div id="cobra-main-controls" class="hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                               <h3 class="text-xl font-semibold mb-4 text-white">2. Analysis Parameters</h3>
+                               <div id="cobra-selection-tabs" class="st-tabs-container">
+                                   <button data-tab="series" class="st-tab active">Configurations</button>
+                                   <button data-tab="ics" class="st-tab">Key ICs</button>
+                                   <button data-tab="delta" class="st-tab">ΔT Comparison</button>
+                               </div>
+                               <div id="cobra-series-content" class="st-tab-content active"></div>
+                               <div id="cobra-ics-content" class="st-tab-content"></div>
+                               <div id="cobra-delta-content" class="st-tab-content"></div>
+                            </div>
+                             <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                                  <h3 class="text-xl font-semibold mb-4 text-white">3. Key IC Specifications</h3>
+                                  <div id="cobra-spec-editor-container" class="max-h-[25rem] overflow-y-auto pr-2">
+                                       <p class="p-4 text-center text-slate-500">Select Key ICs from the 'Analysis Parameters' tab to input their specifications here.</p>
+                                  </div>
+                             </div>
+                        </div>
+                        <div id="cobra-run-analysis-container" class="border-t border-[var(--border-color)] mt-10 pt-8">
+                            <button id="cobra-run-analysis" class="w-full max-w-md mx-auto block text-white font-bold py-3 px-4 rounded-lg text-lg transition bg-[var(--accent-green)] hover:bg-green-600 shadow-lg shadow-green-500/10">🚀 Analyze Selected Data</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cobra-results-area" class="hidden">
+                     <div class="border-t border-[var(--border-color)] my-10"></div>
+                     <h2 class="text-2xl md:text-3xl font-bold mb-2">Analysis Results</h2>
+                     <button id="cobra-back-to-setup" class="text-sm text-[var(--accent-blue)] hover:underline mb-6">← Back to Setup</button>
+                     <div id="cobra-results-tabs" class="st-tabs-container">
+                         <button data-tab="conclusions" class="st-tab active">Conclusions</button>
+                         <button data-tab="table" class="st-tab">Data Table</button>
+                         <button data-tab="chart" class="st-tab">Chart</button>
+                     </div>
+                     <div id="cobra-conclusions-content" class="st-tab-content active"></div>
+                     <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
+                     <div id="cobra-chart-content" class="st-tab-content bg-white p-4 md:p-6 rounded-lg h-[450px]"></div>
+                </div>
+            `;
+            setupCobraEventListeners();
+        }
+
+        function setupCobraEventListeners() {
+            document.getElementById('cobra-file-uploader').addEventListener('change', handleCobraFileUpload);
+            document.getElementById('cobra-remove-file').addEventListener('click', resetCobraState);
+            document.getElementById('cobra-back-to-setup').addEventListener('click', () => {
+                document.getElementById('cobra-results-area').classList.add('hidden');
+                document.getElementById('cobra-setup-area').classList.remove('hidden');
+            });
+
+            document.getElementById('cobra-selection-tabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('st-tab')) {
+                    const tabName = e.target.dataset.tab;
+                    document.querySelectorAll('#cobra-selection-tabs .st-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('#cobra-main-controls .st-tab-content').forEach(c => c.classList.toggle('active', c.id === `cobra-${tabName}-content`));
+                }
+            });
+            document.getElementById('cobra-results-tabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('st-tab')) {
+                    const tabName = e.target.dataset.tab;
+                    document.querySelectorAll('#cobra-results-tabs .st-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('#cobra-results-area .st-tab-content').forEach(c => c.classList.toggle('active', c.id === `cobra-${tabName}-content`));
+                }
+            });
+            document.getElementById('cobra-run-analysis').addEventListener('click', runCobraAnalysis);
+        }
+
+        function resetCobraState() {
+            document.getElementById('cobra-file-uploader').value = '';
+            document.getElementById('cobra-file-name').textContent = '';
+            document.getElementById('cobra-main-controls').classList.add('hidden');
+            document.getElementById('cobra-results-area').classList.add('hidden');
+            document.getElementById('cobra-setup-area').classList.remove('hidden');
+            Object.keys(cobraState).forEach(key => delete cobraState[key]);
+            if (cobraState.chartInstance) {
+                cobraState.chartInstance.destroy();
+                cobraState.chartInstance = null;
+            }
+        }
+        
+        async function handleCobraFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            resetCobraState();
+            document.getElementById('cobra-file-name').textContent = `File: ${file.name}`;
+            loader.classList.remove('hidden');
+            loaderText.textContent = 'Pre-analyzing Excel file...';
+
+            try {
+                const data = await file.arrayBuffer();
+                cobraState.workbook = XLSX.read(data, {type: 'buffer'});
+                cobraState.prestudyData = cobraPreStudy(cobraState.workbook);
+                if (cobraState.prestudyData.error) throw new Error(cobraState.prestudyData.error);
+                populateCobraControls(cobraState.prestudyData);
+                document.getElementById('cobra-main-controls').classList.remove('hidden');
+            } catch (err) {
+                showMessage(`Error processing file: ${err.message}`, 'error');
+                resetCobraState();
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+        
+        function populateCobraControls(data) {
+            const neutralBtnClasses = "text-xs flex-1 bg-[var(--bg-dark)] hover:bg-[var(--border-color)] text-white font-bold py-1 px-2 rounded-md transition";
+            const seriesContainer = document.getElementById('cobra-series-content');
+            let seriesHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-series" class="${neutralBtnClasses}">Select All</button><button id="cobra-clear-all-series" class="${neutralBtnClasses}">Clear All</button></div><div id="cobra-series-multiselect" class="multiselect-container space-y-1">`;
+            data.seriesNames.forEach(name => {
+                seriesHtml += `<label class="flex items-center cursor-pointer"><input type="checkbox" name="cobra_series" value="${name}" class="mr-2 bg-slate-700 accent-[var(--accent-blue)]" checked><span>${name}</span></label>`;
+            });
+            seriesHtml += `</div>`;
+            seriesContainer.innerHTML = seriesHtml;
+            document.getElementById('cobra-select-all-series').onclick = () => document.querySelectorAll('input[name="cobra_series"]').forEach(cb => cb.checked = true);
+            document.getElementById('cobra-clear-all-series').onclick = () => document.querySelectorAll('input[name="cobra_series"]').forEach(cb => cb.checked = false);
+
+            const icsContainer = document.getElementById('cobra-ics-content');
+            let icsHtml = `<div class="flex gap-4 mb-2"><button id="cobra-select-all-ics" class="${neutralBtnClasses}">Select All</button><button id="cobra-clear-all-ics" class="${neutralBtnClasses}">Clear All</button></div><div id="cobra-ics-multiselect" class="multiselect-container space-y-1">`;
+            data.componentNames.forEach(name => {
+                icsHtml += `<label class="flex items-center cursor-pointer"><input type="checkbox" name="cobra_ics" value="${name}" class="mr-2 bg-slate-700 accent-[var(--accent-blue)]"><span>${name}</span></label>`;
+            });
+            icsHtml += `</div>`;
+            icsContainer.innerHTML = icsHtml;
+            document.getElementById('cobra-select-all-ics').onclick = () => { document.querySelectorAll('input[name="cobra_ics"]').forEach(cb => cb.checked = true); updateSpecEditor(); };
+            document.getElementById('cobra-clear-all-ics').onclick = () => { document.querySelectorAll('input[name="cobra_ics"]').forEach(cb => cb.checked = false); updateSpecEditor(); };
+            document.getElementById('cobra-ics-multiselect').addEventListener('change', updateSpecEditor);
+
+            const deltaContainer = document.getElementById('cobra-delta-content');
+            deltaContainer.innerHTML = `<div id="cobra-delta-pairs-container" class="space-y-3"></div><button id="cobra-add-delta-pair" class="mt-4 text-sm bg-[var(--bg-dark)] hover:bg-[var(--border-color)] text-white font-bold py-2 px-4 rounded-lg w-full transition">Add ΔT Pair</button>`;
+            document.getElementById('cobra-add-delta-pair').addEventListener('click', addDeltaPair);
+        }
+
+        function updateSpecEditor() {
+            const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
+            const container = document.getElementById('cobra-spec-editor-container');
+            
+            if (selectedIcs.length === 0) {
+                container.innerHTML = '<p class="p-4 text-center text-slate-500">Select Key ICs to input specifications.</p>';
+                return;
+            }
+            
+            const tableId = 'cobra-spec-table';
+            let table = document.getElementById(tableId);
+            if (!table) {
+                container.innerHTML = `<table id="${tableId}" class="data-editor-table"></table>`;
+                table = document.getElementById(tableId);
+                table.innerHTML = `<thead><tr><th>Component</th><th>Spec Type</th><th>Tj (°C)</th><th>Rjc (°C/W)</th><th>Pd (W)</th><th>Ta Limit (°C)</th></tr></thead><tbody></tbody>`;
+            }
+
+            const tbody = table.querySelector('tbody');
+            const existingIcs = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset.ic);
+
+            for (const ic of selectedIcs) {
+                if (!existingIcs.includes(ic)) {
+                    const row = tbody.insertRow();
+                    row.dataset.ic = ic;
+                    row.innerHTML = `
+                        <td data-label="Component">${ic}</td>
+                        <td data-label="Spec Type"><select class="spec-type-select"><option value="Tc" selected>Tc</option><option value="Tj">Tj</option><option value="Ta">Ta</option></select></td>
+                        <td data-label="Tj (°C)"><input type="number" class="spec-tj" step="0.1"></td>
+                        <td data-label="Rjc (°C/W)"><input type="number" class="spec-rjc" step="0.1"></td>
+                        <td data-label="Pd (W)"><input type="number" class="spec-pd" step="0.1"></td>
+                        <td data-label="Ta Limit (°C)"><input type="number" class="spec-ta" step="0.1"></td>
+                    `;
+                }
+            }
+
+            for (const ic of existingIcs) {
+                if (!selectedIcs.includes(ic)) {
+                    tbody.querySelector(`tr[data-ic="${ic}"]`).remove();
+                }
+            }
+
+            tbody.querySelectorAll('.spec-type-select').forEach(sel => {
+                sel.onchange = handleSpecTypeChange;
+                handleSpecTypeChange({target: sel});
+            });
+        }
+        
+        function handleSpecTypeChange(event) {
+            const select = event.target;
+            const row = select.closest('tr');
+            const type = select.value;
+            const tjInput = row.querySelector('.spec-tj');
+            const rjcInput = row.querySelector('.spec-rjc');
+            const pdInput = row.querySelector('.spec-pd');
+            const taInput = row.querySelector('.spec-ta');
+            
+            tjInput.style.visibility = (type === 'Tc' || type === 'Tj') ? 'visible' : 'hidden';
+            rjcInput.style.visibility = (type === 'Tc') ? 'visible' : 'hidden';
+            pdInput.style.visibility = (type === 'Tc') ? 'visible' : 'hidden';
+            taInput.style.visibility = (type === 'Ta') ? 'visible' : 'hidden';
+
+            if (tjInput.style.visibility === 'hidden') tjInput.value = '';
+            if (rjcInput.style.visibility === 'hidden') rjcInput.value = '';
+            if (pdInput.style.visibility === 'hidden') pdInput.value = '';
+            if (taInput.style.visibility === 'hidden') taInput.value = '';
+        }
+
+        function addDeltaPair() {
+            const container = document.getElementById('cobra-delta-pairs-container');
+            const selectedSeries = Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value);
+            let optionsHtml = '<option value="---">---</option>';
+            selectedSeries.forEach(s => optionsHtml += `<option value="${s}">${s}</option>`);
+            const pairDiv = document.createElement('div');
+            pairDiv.className = 'grid grid-cols-1 sm:grid-cols-11 gap-2 items-center';
+            pairDiv.innerHTML = `<div class="sm:col-span-5"><select class="w-full bg-[var(--bg-dark)] border border-[var(--border-color)] rounded p-1 text-sm">${optionsHtml}</select></div><span class="text-center hidden sm:block sm:col-span-1">-</span><div class="sm:col-span-5"><select class="w-full bg-[var(--bg-dark)] border border-[var(--border-color)] rounded p-1 text-sm">${optionsHtml}</select></div>`;
+            container.appendChild(pairDiv);
+        }
+
+        // Helper functions to clean data from Excel
+        function cleanSeriesHeader(rawHeader) {
+            let tempName = (rawHeader || '').toString().trim();
+            if (!tempName) return "Unnamed Series";
+            if (['DEFAULT', 'BASELINE'].includes(tempName.toUpperCase())) return tempName.charAt(0).toUpperCase() + tempName.slice(1).toLowerCase();
+            let bracketMatch = tempName.match(/\[(.*?)\]/);
+            if (bracketMatch) {
+                const content = (bracketMatch[1] || '').trim();
+                if (['DEFAULT', 'BASELINE'].includes(content.toUpperCase())) return content.charAt(0).toUpperCase() + content.slice(1).toLowerCase();
+                const keywords = ["CONFIGURATION", "CASE", "OPTION", "SERIES", "TEMP", "MAX"];
+                if (content && !keywords.some(k => k === content.toUpperCase())) return content;
+                tempName = tempName.replace(bracketMatch[0], "").trim();
+            }
+            const patterns = [/Temperature \(Solid\) Max.*/i, /\[°C\]/gi, /\(°C\)/gi, /°C/gi, /PoE mode_battery.*/i, /k=10.*/i];
+            patterns.forEach(p => tempName = tempName.replace(p, "").trim());
+            tempName = tempName.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+            return tempName || "Unnamed Series";
+        }
+        function cleanComponentDisplayName(rawName) {
+            let name = (rawName || '').toString().trim();
+            if (!name) return "Unnamed Component";
+            name = name.replace(/^VG\s+/i, "");
+            const suffixes = [/Temperature \(Solid\) Max.*/i, /Max \[°C\]/i, /\[°C\]/gi, /\(°C\)/gi, /°C/gi];
+            suffixes.forEach(s => name = name.replace(s, "").trim());
+            name = name.replace(/-\s*[\d\.\*\s\+\-/xX]+W/i, "").trim();
+            name = name.replace(/[\s_-]+$/, "").trim();
+            name = name.replace(/[\s_]+/g, " ").trim();
+            return name || "Unnamed Component";
+        }
+
+        // Pre-analyzes the uploaded Excel file to extract series and component names
+        function cobraPreStudy(workbook) {
+            if (!workbook.SheetNames.length) return { error: "Excel file contains no sheets." };
+            const targetSheetName = workbook.SheetNames[workbook.SheetNames.length - 1];
+            const sheet = workbook.Sheets[targetSheetName];
+            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+            let headerRowIdx = -1, componentColIdx = -1; 
+            for (let i = 0; i < 20 && i < jsonSheet.length; i++) {
+                const row = jsonSheet[i];
+                if (!row) continue;
+                for (let j = 0; j < row.length; j++) {
+                    const cellValue = row[j];
+                    if (cellValue && typeof cellValue === 'string' && cellValue.trim().toUpperCase().includes("GOAL")) {
+                        headerRowIdx = i; componentColIdx = j; break; 
+                    }
+                }
+                if (headerRowIdx !== -1) break;
+            }
+            if (headerRowIdx === -1) return { error: "Could not find a header containing 'Goal' in the first 20 rows of the last sheet." };
+            
+            const headerRow = jsonSheet[headerRowIdx];
+            const firstSeriesColIdx = componentColIdx + 1;
+            const rawSeriesNames = headerRow.slice(firstSeriesColIdx).filter(name => name && name.toString().trim() && name.toString().trim().toLowerCase() !== 'nan');
+            const seriesExcelIndices = {};
+            headerRow.forEach((name, i) => { if (i >= firstSeriesColIdx && rawSeriesNames.includes(name)) seriesExcelIndices[name] = i; });
+            const cleanedNames = [], counts = {}, cleanedToRawMap = {};
+            rawSeriesNames.forEach(rawName => {
+                const cleanBase = cleanSeriesHeader(rawName);
+                const count = counts[cleanBase] || 0;
+                const finalName = count > 0 ? `${cleanBase}_${count + 1}` : cleanBase;
+                counts[cleanBase] = count + 1;
+                cleanedNames.push(finalName);
+                cleanedToRawMap[finalName] = rawName;
+            });
+            const componentData = jsonSheet.slice(headerRowIdx + 1);
+            const cleanedComponentsSet = new Set();
+            componentData.forEach(row => {
+                if (row && row[componentColIdx]) {
+                    const cleaned = cleanComponentDisplayName(row[componentColIdx]);
+                    if (cleaned) cleanedComponentsSet.add(cleaned);
+                }
+            });
+            return { error: null, seriesNames: cleanedNames, componentNames: Array.from(cleanedComponentsSet).sort(), seriesExcelIndices, cleanedToRawMap, headerRowIdx, componentColIdx, targetSheetName };
+        }
+        
+        // Runs the main analysis based on user selections
+        function runCobraAnalysis() {
+            loader.classList.remove('hidden');
+            loaderText.textContent = 'Analyzing System Pulse...';
+            try {
+                const selectedSeries = Array.from(document.querySelectorAll('input[name="cobra_series"]:checked')).map(cb => cb.value);
+                const selectedIcs = Array.from(document.querySelectorAll('input[name="cobra_ics"]:checked')).map(cb => cb.value);
+                if (selectedSeries.length === 0 || selectedIcs.length === 0) throw new Error("Please select at least one configuration and one Key IC.");
+
+                const specData = [];
+                document.querySelectorAll('#cobra-spec-table tbody tr').forEach(row => {
+                    specData.push({
+                        Component: row.dataset.ic,
+                        'Spec Type': row.querySelector('.spec-type-select').value,
+                        'Tj (°C)': parseFloat(row.querySelector('.spec-tj').value) || null,
+                        'Rjc (°C/W)': parseFloat(row.querySelector('.spec-rjc').value) || null,
+                        'Pd (W)': parseFloat(row.querySelector('.spec-pd').value) || null,
+                        'Ta Limit (°C)': parseFloat(row.querySelector('.spec-ta').value) || null,
+                    });
+                });
+                
+                const deltaPairs = [];
+                document.querySelectorAll('#cobra-delta-pairs-container > div').forEach(pairDiv => {
+                    const selects = pairDiv.querySelectorAll('select');
+                    deltaPairs.push({ baseline: selects[0].value, compare: selects[1].value });
+                });
+
+                const prestudy = cobraState.prestudyData;
+                const sheet = cobraState.workbook.Sheets[prestudy.targetSheetName];
+                const dataRows = XLSX.utils.sheet_to_json(sheet, { header: 1, range: prestudy.headerRowIdx + 1, defval: "" });
+                const analysisData = {};
+                selectedSeries.forEach(cleanedName => {
+                    const rawName = prestudy.cleanedToRawMap[cleanedName];
+                    const colIdx = prestudy.seriesExcelIndices[rawName];
+                    analysisData[cleanedName] = dataRows.map(row => parseFloat(row[colIdx]));
+                });
+                const componentNames = dataRows.map(row => cleanComponentDisplayName(row[prestudy.componentColIdx]));
+                const tableData = [], keyIcData = {};
+                selectedIcs.forEach(ic => {
+                    const idx = componentNames.indexOf(ic);
+                    if (idx !== -1) {
+                        const temps = {};
+                        selectedSeries.forEach(sName => { temps[sName] = analysisData[sName][idx]; });
+                        keyIcData[ic] = temps;
+                        tableData.push({ Component: ic, ...temps });
+                    }
+                });
+                if (tableData.length === 0) throw new Error("No data found for the selected Key ICs.");
+
+                const results = {}, conclusionData = [];
+                specData.forEach(specRow => {
+                    const ic = specRow.Component, specType = specRow['Spec Type'];
+                    let effectiveSpec = NaN, specInputs = "N/A";
+                    try {
+                        if (specType === 'Tc') {
+                            const [tj, rjc, pd] = [specRow['Tj (°C)'], specRow['Rjc (°C/W)'], specRow['Pd (W)']];
+                            if (tj !== null && rjc !== null && pd !== null) { effectiveSpec = tj - (pd * rjc); specInputs = `Tj=${tj}, Rjc=${rjc}, Pd=${pd}`; }
+                        } else if (specType === 'Tj') {
+                            effectiveSpec = specRow['Tj (°C)'];
+                            if (effectiveSpec !== null) specInputs = `Tj Max: ${specRow['Tj (°C)']}`;
+                        } else if (specType === 'Ta') {
+                            effectiveSpec = specRow['Ta Limit (°C)'];
+                            if (effectiveSpec !== null) specInputs = `Ta Limit: ${specRow['Ta Limit (°C)']}`;
+                        }
+                    } catch(e) {/* ignore */}
+                    const icResult = { spec: effectiveSpec, result: "N/A", spec_type: specType, spec_inputs: specInputs, series_results: [] };
+                    if (!isNaN(effectiveSpec) && keyIcData[ic]) {
+                        icResult.result = "PASS";
+                        Object.entries(keyIcData[ic]).forEach(([s_name, temp]) => {
+                            let res = "N/A";
+                            if (temp !== null && !isNaN(temp)) {
+                                res = temp <= effectiveSpec ? "PASS" : "FAIL";
+                                if (res === "FAIL") icResult.result = "FAIL";
+                            }
+                            icResult.series_results.push({ series: s_name, temp: temp, result: res });
+                        });
+                    }
+                    results[ic] = icResult;
+                    conclusionData.push({ component: ic, ...icResult });
+                });
+                
+                let displayTable = [...tableData];
+                displayTable.forEach(row => {
+                    const ic = row.Component;
+                    const specResult = results[ic];
+                    if (specResult) {
+                        row['Spec (°C)'] = !isNaN(specResult.spec) ? `${specResult.spec_type} = ${specResult.spec.toFixed(1)}` : 'N/A';
+                        row['Result'] = specResult.result;
+                    }
+                });
+                deltaPairs.forEach(pair => {
+                    if (pair.baseline !== '---' && pair.compare !== '---' && pair.baseline !== pair.compare) {
+                        const deltaColName = `ΔT (${pair.baseline} - ${pair.compare}) (°C)`;
+                        displayTable.forEach(row => {
+                            const tempB = row[pair.baseline], tempC = row[pair.compare];
+                            row[deltaColName] = (typeof tempB === 'number' && typeof tempC === 'number') ? tempB - tempC : NaN;
+                        });
+                    }
+                });
+                const finalTableData = displayTable.map(row => {
+                    const newRow = { 'Component': row.Component };
+                    if (row['Spec (°C)'] !== undefined) newRow['Spec (°C)'] = row['Spec (°C)'];
+                    selectedSeries.forEach(s => newRow[s + ' (°C)'] = row[s]);
+                    const deltaCols = Object.keys(row).filter(k => k.startsWith('ΔT'));
+                    deltaCols.sort().forEach(k => newRow[k] = row[k]);
+                    if (row['Result'] !== undefined) newRow['Result'] = row['Result'];
+                    return newRow;
+                });
+                
+                cobraState.analysisResults = { conclusionData, tableData: finalTableData, chartData: tableData, selectedSeries };
+                renderCobraResults(cobraState.analysisResults);
+                document.getElementById('cobra-setup-area').classList.add('hidden');
+                document.getElementById('cobra-results-area').classList.remove('hidden');
+
+            } catch (err) {
+                showMessage(`Analysis Error: ${err.message}`, 'error');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        // Renders all results sections
+        function renderCobraResults(results) {
+            renderCobraConclusions(results.conclusionData);
+            renderCobraTable(results.tableData, document.getElementById('cobra-table-content'));
+            renderCobraChart(results.chartData, results.selectedSeries, document.getElementById('cobra-chart-content'));
+            // Default to conclusions tab
+            document.querySelectorAll('#cobra-results-tabs .st-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('#cobra-results-tabs .st-tab[data-tab="conclusions"]').classList.add('active');
+            document.querySelectorAll('#cobra-results-area .st-tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('cobra-conclusions-content').classList.add('active');
+        }
+        
+        function renderCobraConclusions(data) {
+            const container = document.getElementById('cobra-conclusions-content');
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="text-slate-400">No conclusion data to display.</p>`;
+                return;
+            }
+            const failedIcs = data.filter(item => item.result === 'FAIL').map(item => item.component);
+            let summaryHtml;
+            if (failedIcs.length > 0) {
+                summaryHtml = `<div class="bg-[var(--bg-light)] p-6 rounded-xl mb-6"><h3 class="text-xl font-bold mb-4">Summary</h3><p class="text-lg"><strong>Result: <span class="text-[var(--accent-red)]">FAIL</span></strong></p><p class="mt-2 text-slate-300">The following components exceeded thermal limits: <strong>${failedIcs.join(', ')}</strong></p></div>`;
+            } else {
+                summaryHtml = `<div class="bg-[var(--bg-light)] p-6 rounded-xl mb-6"><h3 class="text-xl font-bold mb-4">Summary</h3><p class="text-lg"><strong>Result: <span class="text-[var(--accent-green)]">PASS</span></strong></p><p class="mt-2 text-slate-300">All selected Key ICs are within their specified thermal limits across all tested configurations.</p></div>`;
+            }
+            summaryHtml += '<h3 class="text-2xl font-bold mb-4 mt-8">Detailed Component Analysis</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+
+            data.forEach(item => {
+                const resultText = item.result;
+                const statusEmoji = resultText === 'FAIL' ? '🔴' : resultText === 'PASS' ? '🟢' : '⚪️';
+                const specVal = !isNaN(item.spec) ? `${item.spec.toFixed(1)}°C` : 'N/A';
+                summaryHtml += `<div class="p-4 bg-[var(--bg-light)] rounded-lg border border-[var(--border-color)]">
+                    <h4 class="font-bold text-lg">${item.component} — Result: ${statusEmoji} ${resultText}</h4>
+                    <div class="text-sm text-slate-400 mt-2 space-y-1 font-mono">
+                        <p>Spec Type: ${item.spec_type}</p>
+                        <p>Spec Limit: ${specVal}</p>
+                        <p>Spec Inputs: ${item.spec_inputs}</p>
+                    </div>
+                    <p class="mt-3 font-semibold text-slate-300">Performance per Configuration:</p>
+                    <table class="w-full text-sm mt-1"><tbody>`;
+                item.series_results.forEach(res => {
+                    const tempText = res.temp !== null && !isNaN(res.temp) ? res.temp.toFixed(1) : "N/A";
+                    const resClass = res.result === 'FAIL' ? 'text-[var(--accent-red)] font-bold' : res.result === 'PASS' ? 'text-[var(--accent-green)]' : '';
+                    summaryHtml += `<tr><td class="w-1/2 py-1 text-slate-400">${res.series}</td><td class="w-1/4 py-1">${tempText}°C</td><td class="w-1/4 py-1 ${resClass}">${res.result}</td></tr>`;
+                });
+                summaryHtml += `</tbody></table></div>`;
+            });
+            summaryHtml += '</div>'; // close grid
+            container.innerHTML = summaryHtml;
+        }
+
+        // MODIFIED: Takes a container element to render into
+        function renderCobraTable(data, container) {
+            if (!container) { console.error("renderCobraTable: No container provided."); return; }
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="text-slate-400">No table data to display.</p>`;
+                return;
+            }
+            container.innerHTML = `<div class="overflow-x-auto p-2 bg-white rounded-lg"></div>
+                <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                    <button id="cobra-download-png" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">Download as PNG</button>
+                    <button id="cobra-download-excel" class="flex-1 bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">Download as Formatted Excel</button>
+                </div>`;
+
+            const tableContainer = container.querySelector('.overflow-x-auto');
+            tableContainer.innerHTML = ''; 
+            const table = document.createElement('table');
+            table.className = 'w-full';
+            table.style.borderCollapse = 'collapse';
+            table.style.fontFamily = 'Arial, sans-serif';
+
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            const headers = Object.keys(data[0]);
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                th.style.backgroundColor = '#606060'; th.style.color = 'white'; th.style.padding = '10px';
+                th.style.border = '1px solid #ccc'; th.style.textAlign = 'center'; th.style.fontWeight = 'bold';
+                th.style.verticalAlign = 'middle';
+                headerRow.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+            data.forEach((row) => {
+                const tr = tbody.insertRow();
+                headers.forEach(h => {
+                    const td = tr.insertCell();
+                    let cellValue = row[h];
+                    if (typeof cellValue === 'number') cellValue = cellValue.toFixed(1);
+                    if(cellValue === null || cellValue === undefined || (typeof cellValue === 'number' && Number.isNaN(cellValue))) cellValue = 'N/A';
+                    td.textContent = cellValue;
+                    td.style.padding = '10px'; 
+                    td.style.border = '1px solid #ccc'; 
+                    // CHANGE: Center all cells horizontally and vertically
+                    td.style.textAlign = 'center';
+                    td.style.verticalAlign = 'middle';
+                    td.style.backgroundColor = '#f2f2f2'; 
+                    td.style.color = '#333'; 
+                    td.style.whiteSpace = 'nowrap';
+                    if (h === 'Result') {
+                        if (cellValue === 'PASS') { td.style.backgroundColor = '#C6EFCE'; td.style.color = '#006100'; }
+                        if (cellValue === 'FAIL') { td.style.backgroundColor = '#FFC7CE'; td.style.color = '#9C0006'; }
+                    }
+                });
+            });
+            tableContainer.appendChild(table);
+            container.querySelector('#cobra-download-excel').addEventListener('click', downloadCobraExcel);
+            container.querySelector('#cobra-download-png').addEventListener('click', () => {
+                html2canvas(tableContainer.querySelector('table')).then(canvas => {
+                     const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
+                     a.download = 'cobra-table.png'; a.click();
+                });
+            });
+        }
+
+        function downloadCobraExcel() {
+            const tableData = cobraState.analysisResults.tableData;
+            if (!tableData || tableData.length === 0) {
+                showMessage("No data to export.", "error"); return;
+            }
+            const wb = XLSX.utils.book_new(); const ws = {};
+            const headers = Object.keys(tableData[0]);
+            const border = { top: { style: "thin", color: { rgb: "D9D9D9" } }, bottom: { style: "thin", color: { rgb: "D9D9D9" } }, left: { style: "thin", color: { rgb: "D9D9D9" } }, right: { style: "thin", color: { rgb: "D9D9D9" } } };
+            const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "606060" } }, alignment: { horizontal: "center", vertical: "center" }, border: border };
+            const defaultCellStyle = { fill: { fgColor: { rgb: "F2F2F2" } }, alignment: { horizontal: "center", vertical: "center" }, border: border, numFmt: "0.0" };
+            const componentCellStyle = { ...defaultCellStyle, alignment: { horizontal: "left", vertical: "center" } };
+            const passStyle = { ...defaultCellStyle, font: { color: { rgb: "006100" }, bold: true }, fill: { fgColor: { rgb: "C6EFCE" } } };
+            const failStyle = { ...defaultCellStyle, font: { color: { rgb: "9C0006" }, bold: true }, fill: { fgColor: { rgb: "FFC7CE" } } };
+            headers.forEach((header, C) => {
+                const cellRef = XLSX.utils.encode_cell({ c: C, r: 0 });
+                ws[cellRef] = { v: header, t: 's', s: headerStyle };
+            });
+            tableData.forEach((row, R) => {
+                const rowNum = R + 1;
+                headers.forEach((header, C) => {
+                    const cellRef = XLSX.utils.encode_cell({ c: C, r: rowNum });
+                    let value = row[header], cell = {};
+                    if (value === null || typeof value === 'undefined' || (typeof value === 'number' && isNaN(value))) {
+                        cell.v = "N/A"; cell.t = 's';
+                    } else if (typeof value === 'number') {
+                        cell.v = value; cell.t = 'n';
+                    } else {
+                        const numVal = parseFloat(value);
+                        if (!isNaN(numVal) && value.trim() === numVal.toString()) { cell.v = numVal; cell.t = 'n'; }
+                        else { cell.v = value; cell.t = 's'; }
+                    }
+                    let style = (header === 'Component') ? componentCellStyle : defaultCellStyle;
+                    if (header === 'Result') {
+                        if (cell.v === 'PASS') style = passStyle;
+                        else if (cell.v === 'FAIL') style = failStyle;
+                    }
+                    if (cell.t === 'n') style = { ...style, numFmt: "0.0" };
+                    cell.s = style;
+                    ws[cellRef] = cell;
+                });
+            });
+            ws['!cols'] = headers.map(h => {
+                if (h === 'Component') return { wch: 30 };
+                if (h === 'Spec (°C)') return { wch: 15 };
+                if (h === 'Result') return { wch: 10 };
+                if (h.includes('°C') || h.includes('ΔT')) return { wch: 20 };
+                return { wch: 15 };
+            });
+            const range = { s: { c: 0, r: 0 }, e: { c: headers.length - 1, r: tableData.length } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            XLSX.utils.book_append_sheet(wb, ws, "ThermalTableData");
+            XLSX.writeFile(wb, "cobra_results_formatted.xlsx");
+            showMessage("Formatted Excel file has been downloaded.", "success");
+        }
+
+        function renderCobraChart(data, selectedSeries, container) {
+            if (!container) { console.error("renderCobraChart: No container provided."); return null; }
+            container.innerHTML = '<canvas></canvas><div class="mt-6"><button class="w-full bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">Download Chart as PNG</button></div>';
+            
+            if (container.id === 'cobra-chart-content' && cobraState.chartInstance) {
+                 cobraState.chartInstance.destroy();
+            }
+
+            const canvas = container.querySelector('canvas');
+            const ctx = canvas.getContext('2d');
+            const labels = data.map(d => d.Component);
+            const datasets = selectedSeries.map((seriesName, i) => {
+                const colors = ['#0A84FF', '#30D158', '#FF9F0A', '#FFD60A', '#5E5CE6', '#BF5AF2', '#FF453A'];
+                return {
+                    label: seriesName,
+                    data: data.map(d => { const val = d[seriesName]; return val !== null && !isNaN(val) ? val.toFixed(1) : null; }),
+                    backgroundColor: colors[i % colors.length] + 'B3', 
+                    borderColor: colors[i % colors.length],
+                    borderWidth: 1, borderRadius: 4,
+                };
+            });
+            
+            let allData = [];
+            datasets.forEach(ds => {
+                allData = allData.concat(ds.data.filter(v => v !== null && !isNaN(v)).map(v => parseFloat(v)));
+            });
+
+            const minValue = Math.min(...allData);
+            const maxValue = Math.max(...allData);
+            const yAxisMin = allData.length > 0 ? Math.floor(minValue * 0.9) : 0;
+            const yAxisMax = allData.length > 0 ? Math.ceil(maxValue * 1.1) : 100;
+
+            Chart.register(ChartDataLabels);
+            const whiteBackgroundPlugin = {
+                id: 'whiteBackgroundPlugin',
+                beforeDraw: (chart) => {
+                    const ctx = chart.canvas.getContext('2d');
+                    ctx.save(); ctx.globalCompositeOperation = 'destination-over';
+                    ctx.fillStyle = 'white'; ctx.fillRect(0, 0, chart.width, chart.height);
+                    ctx.restore();
+                }
+            };
+
+            const chartInstance = new Chart(ctx, {
+                type: 'bar', data: { labels: labels, datasets: datasets },
+                plugins: [whiteBackgroundPlugin, ChartDataLabels],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 30 } },
+                    scales: {
+                        y: { 
+                            min: yAxisMin,
+                            max: yAxisMax,
+                            title: { display: true, text: 'Temperature (°C)', color: '#111' }, 
+                            grid: { color: '#e0e0e0' }, 
+                            ticks: { color: '#666'} 
+                        },
+                        x: { grid: { display: false }, ticks: { color: '#666'} }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Key IC Temperature Comparison', color: '#111', font: {size: 16, weight: 'bold'} },
+                        legend: { position: 'bottom', labels: { color: '#333' } },
+                        datalabels: {
+                            anchor: 'end', align: 'top', color: '#444', font: { weight: 'bold' },
+                            formatter: (value) => { return value ? parseFloat(value).toFixed(1) : ''; }
+                        }
+                    }
+                }
+            });
+
+            container.querySelector('button').onclick = () => {
+                const url = chartInstance.toBase64Image();
+                const a = document.createElement('a'); a.href = url;
+                a.download = 'cobra_chart.png'; a.click();
+            };
+            
+            if (container.id === 'cobra-chart-content') {
+                cobraState.chartInstance = chartInstance;
+            }
+            return chartInstance;
+        }
+
+        // --- Mamba Tool Functions ---
+        const mambaState = {};
+
+        function renderMambaUI() {
+            const mambaUI = document.getElementById('mamba-ui');
+            mambaUI.innerHTML = `
+                <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
+                    <div class="mr-4 hidden sm:block"><svg class="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 21C4 17.134 7.13401 14 11 14C14.866 14 18 17.134 18 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14V3L15 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 21C8 19.3431 9.34315 18 11 18C12.6569 18 14 19.3431 14 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8.02864C8.42398 7.37341 9.06649 6.88373 9.80554 6.6212M14.2233 4.85854C13.593 4.30202 12.825 3.93115 12 3.7915" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Mamba</h1><p class="text-slate-400 mt-0">PowerPoint Content Generation</p></div>
+                </div>
+                 <div class="space-y-8">
+                    <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                        <h3 class="text-xl font-semibold mb-4 text-white">1. Upload Power Data Excel File</h3>
+                        <div class="flex items-center gap-4">
+                            <label for="mamba-file-uploader" class="flex-grow cursor-pointer bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Power Data File</label>
+                            <input type="file" id="mamba-file-uploader" class="hidden" accept=".xlsx, .xls">
+                        </div>
+                         <p id="mamba-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
+                    </div>
+                    <div id="mamba-sheet-selector-section" class="hidden bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                        <h3 class="text-xl font-semibold mb-4 text-white">2. Select Sheet to Analyze</h3>
+                        <select id="mamba-sheet-selector" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition"></select>
+                    </div>
+                    <div id="mamba-power-table-section" class="hidden">
+                         <h3 class="text-xl font-semibold mb-4 text-white">3. Processed Power Table</h3>
+                         <div id="mamba-power-table-container"></div>
+                    </div>
+                    <div id="mamba-ppt-generation-section" class="hidden bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                         <h3 class="text-xl font-semibold mb-4 text-white">4. Generate PowerPoint Report</h3>
+                         <div class="mb-6">
+                            <label for="ppt-template-uploader" class="block text-sm font-medium text-slate-300 mb-2">Upload PPTX Template</label>
+                            <div class="flex items-center gap-4">
+                                <label for="ppt-template-uploader" class="flex-grow cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Template File</label>
+                                <input type="file" id="ppt-template-uploader" class="hidden" accept=".pptx">
+                            </div>
+                             <p id="ppt-template-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
+                        </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="ppt-project-name" class="block text-sm font-medium text-slate-300 mb-1">Project Name</label>
+                                    <input type="text" id="ppt-project-name" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., AP4060 Improvement Study">
+                                </div>
+                                <div>
+                                    <label for="ppt-report-date" class="block text-sm font-medium text-slate-300 mb-1">Report Date</label>
+                                    <input type="date" id="ppt-report-date" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                                </div>
+                                <div>
+                                    <label for="ppt-ambient-temp" class="block text-sm font-medium text-slate-300 mb-1">Ambient Temperature (°C)</label>
+                                    <input type="number" id="ppt-ambient-temp" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" value="25">
+                                </div>
+                                <div>
+                                    <label for="ppt-total-power" class="block text-sm font-medium text-slate-300 mb-1">Total System Power (W)</label>
+                                    <input type="number" id="ppt-total-power" step="0.1" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., 15.5">
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                     <label class="block text-sm font-medium text-slate-300 mb-1">Convection</label>
+                                     <div class="flex gap-4">
+                                        <label class="flex items-center"><input type="radio" name="ppt-convection" value="Natural" class="mr-2 accent-[var(--accent-blue)]" checked>Natural</label>
+                                        <label class="flex items-center"><input type="radio" name="ppt-convection" value="Forced" class="mr-2 accent-[var(--accent-blue)]">Forced</label>
+                                     </div>
+                                </div>
+                                 <div>
+                                      <label class="block text-sm font-medium text-slate-300 mb-1">Orientation</label>
+                                      <div class="flex flex-col gap-2">
+                                         <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Desktop" class="mr-2 accent-[var(--accent-blue)]" checked>Desktop</label>
+                                         <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Wall mount" class="mr-2 accent-[var(--accent-blue)]">Wall mount</label>
+                                         <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Ceiling" class="mr-2 accent-[var(--accent-blue)]">Ceiling</label>
+                                      </div>
+                                 </div>
+                            </div>
+                         </div>
+                         <div class="mt-8">
+                            <button id="mamba-generate-ppt" class="w-full bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition shadow-lg shadow-green-500/10">Generate PPT Report</button>
+                         </div>
+                    </div>
+                 </div>
+            `;
+            setupMambaEventListeners();
+        }
+        
+        function setupMambaEventListeners() {
+            document.getElementById('mamba-file-uploader').addEventListener('change', handleMambaFileUpload);
+            const pptTemplateUploader = document.getElementById('ppt-template-uploader');
+            if(pptTemplateUploader) {
+                pptTemplateUploader.addEventListener('change', (e) => {
+                    const fileName = e.target.files[0]?.name || 'No file selected';
+                    document.getElementById('ppt-template-file-name').textContent = fileName;
+                });
+            }
+            const pptButton = document.getElementById('mamba-generate-ppt');
+            if(pptButton) {
+                pptButton.addEventListener('click', generateMambaPptWithBackend);
+            }
+        }
+
+        async function handleMambaFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('mamba-file-name').textContent = `File: ${file.name}`;
+            loader.classList.remove('hidden');
+            loaderText.textContent = 'Reading Excel file...';
+
+            document.getElementById('mamba-sheet-selector-section').classList.add('hidden');
+            document.getElementById('mamba-power-table-section').classList.add('hidden');
+            document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
+
+            try {
+                const data = await file.arrayBuffer();
+                mambaState.workbook = XLSX.read(data, {type: 'buffer'});
+                if (!mambaState.workbook.SheetNames || mambaState.workbook.SheetNames.length === 0) {
+                    throw new Error("Excel file contains no sheets.");
+                }
+
+                renderMambaSheetSelector(mambaState.workbook.SheetNames);
+                document.getElementById('mamba-sheet-selector-section').classList.remove('hidden');
+                
+                analyzeMambaSheet(mambaState.workbook.SheetNames[0]);
+
+            } catch (err) {
+                showMessage(`Error reading file: ${err.message}`, 'error');
+                document.getElementById('mamba-file-name').textContent = '';
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderMambaSheetSelector(sheetNames) {
+            const selectEl = document.getElementById('mamba-sheet-selector');
+            selectEl.innerHTML = '<option value="">-- Select a Sheet --</option>';
+            sheetNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                selectEl.appendChild(option);
+            });
+            selectEl.value = sheetNames[0];
+
+            selectEl.onchange = (event) => {
+                const selectedSheet = event.target.value;
+                if (selectedSheet && mambaState.workbook) {
+                    analyzeMambaSheet(selectedSheet);
+                } else {
+                    document.getElementById('mamba-power-table-section').classList.add('hidden');
+                    document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
+                }
+            };
+        }
+
+        function analyzeMambaSheet(sheetName) {
+            loader.classList.remove('hidden');
+            loaderText.textContent = `Processing sheet: ${sheetName}...`;
+            try {
+                const processedData = processPowerData(mambaState.workbook, sheetName);
+                if (processedData.error) throw new Error(processedData.error);
+                
+                mambaState.analysisResults = processedData;
+                renderMambaPowerTable(processedData.headers, processedData.data, document.getElementById('mamba-power-table-container'));
+                document.getElementById('mamba-power-table-section').classList.remove('hidden');
+                document.getElementById('mamba-ppt-generation-section').classList.remove('hidden');
+            } catch (err) {
+                showMessage(`Error processing sheet: ${err.message}`, 'error');
+                document.getElementById('mamba-power-table-section').classList.add('hidden');
+                document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function processPowerData(workbook, sheetName) {
+            const headerKeywords = {
+                Function: ["FUNCTION"],
+                DevicePN: ["DEVICE", "P/N"],
+                AvgPower: ["AVG"],
+                PeakPower: ["PEAK"]
+            };
+            const requiredHeaderKeys = ["Function", "DevicePN", "AvgPower"];
+            
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) return { error: `Sheet "${sheetName}" not found.` };
+            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+            
+            let headerRowIndex = -1;
+            let colMap = {};
+
+            for (let i = 0; i < 20 && i < jsonSheet.length; i++) {
+                const row = jsonSheet[i];
+                if (!row) continue;
+                
+                const tempHeaderMap = {};
+                let foundKeywords = new Set();
+
+                row.forEach((cell, j) => {
+                    const cellStr = String(cell || '').toUpperCase();
+                    if (!cellStr) return;
+
+                    for (const key in headerKeywords) {
+                        if (tempHeaderMap[key]) continue;
+                        const kws = headerKeywords[key];
+                        if (kws.every(kw => cellStr.includes(kw))) {
+                            tempHeaderMap[key] = { index: j, name: cell };
+                            foundKeywords.add(key);
+                        }
+                    }
+                });
+
+                if (requiredHeaderKeys.every(key => foundKeywords.has(key))) {
+                    headerRowIndex = i;
+                    colMap = tempHeaderMap;
+                    break;
+                }
+            }
+
+            if (headerRowIndex === -1) {
+                return { error: `A valid header row was not found in sheet "${sheetName}". Ensure it contains 'Function', 'Device P/N', and 'AVG'.` };
+            }
+            
+            const hasPeakPower = !!colMap.PeakPower;
+            const dataRows = jsonSheet.slice(headerRowIndex + 1);
+            
+            const poeKeywords = ['BRIDGE', 'POE', 'PSE'];
+            const dcKeywords = ['DC', 'LDO'];
+            const voltageRegex = /\d+(\.\d+)?V/i;
+
+            let otherComponents = [];
+            let totalPowerSourceRows = [];
+            let poeAvgPowerSum = 0, poePeakPowerSum = 0;
+            let dcAvgPowerSum = 0, dcPeakPowerSum = 0;
+            
+            dataRows.forEach(row => {
+                if (!row || row[colMap.Function.index] === null) return;
+                
+                const functionName = String(row[colMap.Function.index] || "");
+                const functionNameUpper = functionName.toUpperCase();
+                const avgPowerVal = row[colMap.AvgPower.index];
+                
+                if (!functionName.trim() || avgPowerVal === null || avgPowerVal === '' || isNaN(parseFloat(avgPowerVal))) {
+                    return; 
+                }
+
+                if (functionNameUpper.includes('RJ45 WITH TRANSFORMER')) {
+                    return;
+                }
+
+                if (functionNameUpper.includes('TOTAL POWER')) {
+                    totalPowerSourceRows.push(row);
+                    return;
+                }
+                
+                const isPoeRow = poeKeywords.some(kw => functionNameUpper.includes(kw));
+                if (isPoeRow) {
+                    poeAvgPowerSum += parseFloat(avgPowerVal) || 0;
+                    if (hasPeakPower) poePeakPowerSum += parseFloat(row[colMap.PeakPower.index]) || 0;
+                    return;
+                }
+                
+                const isDcRow = dcKeywords.some(kw => functionNameUpper.includes(kw)) || voltageRegex.test(functionName);
+                if (isDcRow) {
+                    dcAvgPowerSum += parseFloat(avgPowerVal) || 0;
+                    if (hasPeakPower) dcPeakPowerSum += parseFloat(row[colMap.PeakPower.index]) || 0;
+                    return;
+                }
+                
+                otherComponents.push(row);
+            });
+            
+            const finalHeaders = [colMap.Function.name, colMap.DevicePN.name, colMap.AvgPower.name];
+            if (hasPeakPower) finalHeaders.push(colMap.PeakPower.name);
+            
+            const mapRow = (sourceRow) => {
+                const newRow = {};
+                finalHeaders.forEach(headerName => {
+                    const keyName = Object.keys(colMap).find(k => colMap[k].name === headerName);
+                    if (keyName) {
+                        newRow[headerName] = sourceRow[colMap[keyName].index];
+                    }
+                });
+                return newRow;
+            };
+
+            let processedData = otherComponents.map(mapRow);
+            
+            if (poeAvgPowerSum > 0) {
+                const poePowerAllRow = {};
+                finalHeaders.forEach(h => poePowerAllRow[h] = null);
+                poePowerAllRow[finalHeaders[0]] = "PoE POWER ALL";
+                poePowerAllRow[finalHeaders[2]] = poeAvgPowerSum;
+                if (hasPeakPower) poePowerAllRow[finalHeaders[3]] = poePeakPowerSum;
+                processedData.push(poePowerAllRow);
+            }
+
+            if (dcAvgPowerSum > 0) {
+                const dcPowerAllRow = {};
+                finalHeaders.forEach(h => dcPowerAllRow[h] = null);
+                dcPowerAllRow[finalHeaders[0]] = "DC POWER ALL";
+                dcPowerAllRow[finalHeaders[2]] = dcAvgPowerSum;
+                if (hasPeakPower) dcPowerAllRow[finalHeaders[3]] = dcPeakPowerSum;
+                processedData.push(dcPowerAllRow);
+            }
+            
+            if (totalPowerSourceRows.length > 0) {
+                 totalPowerSourceRows.sort((a, b) => {
+                    const nameA = String(a[colMap.Function.index] || '').toUpperCase();
+                    const nameB = String(b[colMap.Function.index] || '').toUpperCase();
+                    if (nameA < nameB) return -1;
+                    if (nameA > nameB) return 1;
+                    return 0;
+                }).forEach(sourceRow => {
+                    processedData.push(mapRow(sourceRow));
+                });
+            }
+
+            return { headers: finalHeaders, data: processedData };
+        }
+
+        // MODIFIED: Takes a container element and centers text
+        function renderMambaPowerTable(headers, data, container) {
+            if (!container) { console.error("renderMambaPowerTable: No container provided."); return; }
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 p-4">No processed power data to display.</p>`;
+                return;
+            }
+            
+            container.innerHTML = `<div class="overflow-x-auto p-2 bg-white rounded-lg"></div>`;
+            const tableContainer = container.querySelector('.overflow-x-auto');
+            tableContainer.innerHTML = '';
+            
+            const table = document.createElement('table');
+            table.className = 'w-full';
+            table.style.borderCollapse = 'collapse';
+            table.style.fontFamily = 'Arial, sans-serif';
+
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                th.style.backgroundColor = '#606060'; th.style.color = 'white'; th.style.padding = '10px';
+                th.style.border = '1px solid #ccc'; th.style.textAlign = 'center'; th.style.fontWeight = 'bold';
+                th.style.verticalAlign = 'middle';
+                headerRow.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+            data.forEach(row => {
+                const tr = tbody.insertRow();
+                const functionName = String(row[headers[0]] || '').toUpperCase();
+                const isTotalRow = functionName.includes('TOTAL POWER');
+                const isDcRow = functionName.includes('DC POWER ALL');
+                const isPoeRow = functionName.includes('POE POWER ALL');
+
+                headers.forEach(h => {
+                    const td = tr.insertCell();
+                    let cellValue = row[h];
+                    if (typeof cellValue === 'number') {
+                        cellValue = parseFloat(cellValue.toFixed(3));
+                    }
+                    if (cellValue === null || cellValue === undefined || (typeof cellValue === 'number' && Number.isNaN(cellValue)) ) {
+                        cellValue = '';
+                    }
+                    td.textContent = cellValue;
+                    td.style.padding = '10px'; 
+                    td.style.border = '1px solid #ccc'; 
+                    // CHANGE: Center all cells horizontally and vertically
+                    td.style.textAlign = 'center';
+                    td.style.verticalAlign = 'middle';
+                    td.style.backgroundColor = '#f2f2f2'; 
+                    td.style.color = '#333';
+
+                    if(isDcRow || isPoeRow || isTotalRow) {
+                        td.style.fontWeight = 'bold';
+                    }
+                    if(isTotalRow) {
+                        td.style.backgroundColor = '#E2E2E2';
+                    }
+                });
+            });
+
+            tableContainer.appendChild(table);
+        }
 
         async function generateMambaPptWithBackend() {
-            // --- 1. Gather all data and validate ---
             const projectName = document.getElementById('ppt-project-name').value;
             let reportDateInput = document.getElementById('ppt-report-date').value;
             const ambientTemp = document.getElementById('ppt-ambient-temp').value;
             const totalPower = document.getElementById('ppt-total-power').value;
             const convection = document.querySelector('input[name="ppt-convection"]:checked')?.value;
-            const orientation = document.querySelector('input[name="ppt-orientation"]:checked')?.value;
+            
+            // CHANGE: Read multiple checkbox values
+            const orientation = Array.from(document.querySelectorAll('input[name="ppt-orientation"]:checked'))
+                                     .map(cb => cb.value)
+                                     .join(', ');
+
             const templateFile = document.getElementById('ppt-template-uploader').files[0];
             
             if (!projectName || !reportDateInput || !ambientTemp || !totalPower || !convection || !orientation || !templateFile) {
-                showMessage("Please fill in all fields and upload a PPTX template.", "error");
+                showMessage("Please fill in all fields, select an orientation, and upload a PPTX template.", "error");
                 return;
             }
 
@@ -78,8 +1788,15 @@
                 loaderText.textContent = "Capturing tables and charts... (1/3)";
                 const { mambaTableDataUrl, cobraTableDataUrl, cobraChartDataUrl } = await captureAllImagesForPPT();
 
-                if (!mambaTableDataUrl || !cobraTableDataUrl || !cobraChartDataUrl) {
-                    throw new Error("Image conversion failed. One or more elements could not be captured.");
+                const MIN_IMAGE_SIZE = 500;
+                if (!mambaTableDataUrl || mambaTableDataUrl.length < MIN_IMAGE_SIZE) {
+                     throw new Error("Image conversion failed for Mamba Power Table.");
+                }
+                 if (!cobraTableDataUrl || cobraTableDataUrl.length < MIN_IMAGE_SIZE) {
+                     throw new Error("Image conversion failed for Cobra Data Table.");
+                }
+                 if (!cobraChartDataUrl || cobraChartDataUrl.length < MIN_IMAGE_SIZE) {
+                     throw new Error("Image conversion failed for Cobra Chart.");
                 }
 
                 loaderText.textContent = "Building report... (2/3)";
@@ -128,60 +1845,75 @@
         }
         
         function captureAllImagesForPPT() {
-            return new Promise((resolve, reject) => {
-                const mambaTableEl = document.querySelector('#mamba-table-render table');
-                const cobraTableEl = document.querySelector('#cobra-table-render table');
-                const cobraChartInstance = cobraState.chartInstance;
-                const cobraResultsArea = document.getElementById('cobra-results-area');
-                const cobraTableContent = document.getElementById('cobra-table-content');
-                const cobraChartContent = document.getElementById('cobra-chart-content');
-
-                if (!mambaTableEl || !cobraTableEl || !cobraChartInstance) {
-                    return reject(new Error("Could not find all necessary HTML elements to capture."));
+            return new Promise(async (resolve, reject) => {
+                if (!mambaState?.analysisResults?.data || !cobraState?.analysisResults?.tableData) {
+                    return reject(new Error("Capture Error: Analysis data is missing. Please run both analyses."));
                 }
+
+                const captureStage = document.createElement('div');
+                captureStage.id = 'capture-stage';
+                captureStage.style.position = 'fixed';
+                captureStage.style.top = '0';
+                captureStage.style.left = '0';
+                captureStage.style.width = '100vw';
+                captureStage.style.height = '100vh';
+                captureStage.style.zIndex = '9999';
+                captureStage.style.backgroundColor = 'white';
+                captureStage.style.display = 'flex';
+                captureStage.style.flexDirection = 'column';
+                captureStage.style.alignItems = 'center';
+                captureStage.style.justifyContent = 'flex-start';
+                captureStage.style.overflow = 'auto';
+                captureStage.style.padding = '40px';
                 
-                // 儲存原始的 class 和 style
-                const originalStyles = {
-                    results: { className: cobraResultsArea.className },
-                    table: { className: cobraTableContent.className },
-                    chart: { className: cobraChartContent.className }
-                };
+                document.body.appendChild(captureStage);
 
-                // **強制現形**
-                cobraResultsArea.className = '';
-                cobraTableContent.className = 'st-tab-content';
-                cobraChartContent.className = 'st-tab-content';
-                cobraResultsArea.style.display = 'block';
-                cobraTableContent.style.display = 'block';
-                cobraChartContent.style.display = 'block';
+                try {
+                    const mambaContainer = document.createElement('div');
+                    mambaContainer.style.marginBottom = '40px';
+                    captureStage.appendChild(mambaContainer);
+                    
+                    const cobraTableContainer = document.createElement('div');
+                    cobraTableContainer.style.marginBottom = '40px';
+                    captureStage.appendChild(cobraTableContainer);
 
-                // 等待下一幀繪製
-                requestAnimationFrame(async () => {
-                    try {
-                        const cobraChartDataUrl = cobraChartInstance.toBase64Image();
-                        const [mambaTableCanvas, cobraTableCanvas] = await Promise.all([
-                            html2canvas(mambaTableEl, { scale: 2, backgroundColor: '#FFFFFF' }),
-                            html2canvas(cobraTableEl, { scale: 2, backgroundColor: '#FFFFFF' })
-                        ]);
-                        
-                        const mambaTableDataUrl = mambaTableCanvas.toDataURL("image/png");
-                        const cobraTableDataUrl = cobraTableCanvas.toDataURL("image/png");
-                        
-                        resolve({ mambaTableDataUrl, cobraTableDataUrl, cobraChartDataUrl });
-                    } catch (err) {
-                        reject(err);
-                    } finally {
-                        // **恢復原狀**
-                        cobraResultsArea.className = originalStyles.results.className;
-                        cobraTableContent.className = originalStyles.table.className;
-                        cobraChartContent.className = originalStyles.chart.className;
-                        cobraResultsArea.style.display = '';
-                        cobraTableContent.style.display = '';
-                        cobraChartContent.style.display = '';
+                    const cobraChartContainer = document.createElement('div');
+                    cobraChartContainer.style.width = '800px';
+                    cobraChartContainer.style.height = '450px';
+                    captureStage.appendChild(cobraChartContainer);
+
+                    renderMambaPowerTable(mambaState.analysisResults.headers, mambaState.analysisResults.data, mambaContainer);
+                    renderCobraTable(cobraState.analysisResults.tableData, cobraTableContainer);
+                    const tempChart = renderCobraChart(cobraState.analysisResults.chartData, cobraState.analysisResults.selectedSeries, cobraChartContainer);
+
+                    await new Promise(res => setTimeout(() => requestAnimationFrame(res), 300));
+
+                    const [mambaCanvas, cobraTableCanvas] = await Promise.all([
+                        html2canvas(mambaContainer.querySelector('.overflow-x-auto'), { scale: 2, useCORS: true }),
+                        html2canvas(cobraTableContainer.querySelector('.overflow-x-auto'), { scale: 2, useCORS: true })
+                    ]);
+                    
+                    const mambaTableDataUrl = mambaCanvas.toDataURL("image/png");
+                    const cobraTableDataUrl = cobraTableCanvas.toDataURL("image/png");
+                    const cobraChartDataUrl = tempChart.toBase64Image('image/png', 1.0);
+
+                    if(tempChart) tempChart.destroy();
+                    
+                    resolve({ mambaTableDataUrl, cobraTableDataUrl, cobraChartDataUrl });
+
+                } catch (err) {
+                    console.error("html2canvas capture failed:", err);
+                    reject(new Error(`Failed during image capture process. ${err.message}`));
+                } finally {
+                    if (document.body.contains(captureStage)) {
+                        document.body.removeChild(captureStage);
                     }
-                });
+                }
             });
         }
+        
+        document.addEventListener('DOMContentLoaded', initializeAndRunApp);
+
     </script>
 </body>
 </html>
