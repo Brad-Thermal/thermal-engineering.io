@@ -705,8 +705,13 @@
                         <div class="flex items-center gap-4">
                             <label for="power-file-uploader" class="flex-grow cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Power Data File</label>
                             <input type="file" id="power-file-uploader" class="hidden" accept=".xlsx, .xls">
+                            <button id="power-remove-file" class="bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Remove File</button>
                         </div>
                          <p id="power-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
+                         <div id="power-sheet-selector-section" class="hidden mt-4">
+                            <label for="power-sheet-selector" class="block text-sm font-medium text-slate-300 mb-2">Select Sheet to Analyze</label>
+                            <select id="power-sheet-selector" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition"></select>
+                         </div>
                     </div>
 
                     <div id="cobra-main-controls" class="hidden">
@@ -759,8 +764,9 @@
 
         function setupCobraEventListeners() {
             document.getElementById('cobra-file-uploader').addEventListener('change', handleCobraFileUpload);
-            document.getElementById('power-file-uploader').addEventListener('change', handlePowerFileUpload); // New Listener
+            document.getElementById('power-file-uploader').addEventListener('change', handlePowerFileUpload);
             document.getElementById('cobra-remove-file').addEventListener('click', resetCobraState);
+            document.getElementById('power-remove-file').addEventListener('click', resetPowerFileState);
             document.getElementById('cobra-back-to-setup').addEventListener('click', () => {
                 document.getElementById('cobra-results-area').classList.add('hidden');
                 document.getElementById('cobra-setup-area').classList.remove('hidden');
@@ -787,17 +793,18 @@
 
         function resetCobraState() {
             document.getElementById('cobra-file-uploader').value = '';
-            document.getElementById('power-file-uploader').value = '';
             document.getElementById('cobra-file-name').textContent = '';
-            document.getElementById('power-file-name').textContent = '';
             document.getElementById('cobra-main-controls').classList.add('hidden');
-            document.getElementById('cobra-results-area').classList.add('hidden');
-            document.getElementById('cobra-setup-area').classList.remove('hidden');
-            Object.keys(cobraState).forEach(key => delete cobraState[key]);
-            if (cobraState.chartInstance) {
-                cobraState.chartInstance.destroy();
-                cobraState.chartInstance = null;
-            }
+            resetPowerFileState(); // Also reset the power file section
+        }
+
+        function resetPowerFileState() {
+            document.getElementById('power-file-uploader').value = '';
+            document.getElementById('power-file-name').textContent = '';
+            document.getElementById('power-sheet-selector-section').classList.add('hidden');
+            document.getElementById('cobra-power-table-content').innerHTML = '';
+            delete cobraState.powerWorkbook;
+            delete cobraState.powerTableResults;
         }
         
         async function handleCobraFileUpload(event) {
@@ -826,25 +833,59 @@
         async function handlePowerFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
+            
+            resetPowerFileState();
             document.getElementById('power-file-name').textContent = `Power Data File: ${file.name}`;
             loader.classList.remove('hidden');
             loaderText.textContent = 'Processing Power Data...';
 
             try {
                 const data = await file.arrayBuffer();
-                const powerWorkbook = XLSX.read(data, {type: 'buffer'});
-                const sheetName = powerWorkbook.SheetNames[0]; // Process the first sheet for power data
-                const powerData = processPowerData(powerWorkbook, sheetName);
-                if (powerData.error) throw new Error(powerData.error);
-                cobraState.powerTableResults = powerData;
-                showMessage("Power data processed successfully.", "success");
+                cobraState.powerWorkbook = XLSX.read(data, {type: 'buffer'});
+
+                const sheetNames = cobraState.powerWorkbook.SheetNames;
+                if (!sheetNames || sheetNames.length === 0) {
+                    throw new Error("Power file contains no sheets.");
+                }
+
+                const selectEl = document.getElementById('power-sheet-selector');
+                selectEl.innerHTML = ''; // Clear previous options
+                sheetNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    selectEl.appendChild(option);
+                });
+                
+                selectEl.onchange = (e) => analyzePowerSheet(e.target.value);
+
+                document.getElementById('power-sheet-selector-section').classList.remove('hidden');
+
+                // Analyze the first sheet by default
+                analyzePowerSheet(sheetNames[0]);
+
             } catch (err) {
                 showMessage(`Error processing power file: ${err.message}`, 'error');
-                document.getElementById('power-file-name').textContent = '';
-                delete cobraState.powerTableResults;
+                resetPowerFileState();
             } finally {
                 loader.classList.add('hidden');
+            }
+        }
+        
+        function analyzePowerSheet(sheetName) {
+            if (!cobraState.powerWorkbook) return;
+             try {
+                const powerData = processPowerData(cobraState.powerWorkbook, sheetName);
+                if (powerData.error) throw new Error(powerData.error);
+                cobraState.powerTableResults = powerData;
+                showMessage(`Successfully processed sheet: ${sheetName}`, "success");
+                // If results are already visible, update the power table tab
+                if (!document.getElementById('cobra-results-area').classList.contains('hidden')) {
+                    renderPowerTableForReport(powerData.headers, powerData.data);
+                }
+            } catch (err) {
+                showMessage(`Error analyzing sheet "${sheetName}": ${err.message}`, 'error');
+                delete cobraState.powerTableResults;
             }
         }
         
@@ -1148,6 +1189,7 @@
                 
                 cobraState.analysisResults = { conclusionData, tableData: finalTableData, chartData: tableData, selectedSeries };
                 
+                // Render all results
                 renderCobraResults(cobraState.analysisResults);
 
                 document.getElementById('cobra-setup-area').classList.add('hidden');
@@ -1167,7 +1209,7 @@
             renderCobraChart(results.chartData, results.selectedSeries, document.getElementById('cobra-chart-content'));
             // Render the power table if data exists
             if (cobraState.powerTableResults) {
-                renderPowerTableForReport(cobraState.powerTableResults.headers, cobraState.powerTableResults.data, document.getElementById('cobra-power-table-content'));
+                renderPowerTableForReport(cobraState.powerTableResults.headers, cobraState.powerTableResults.data);
             }
 
             document.querySelectorAll('#cobra-results-tabs .st-tab').forEach(t => t.classList.remove('active'));
@@ -1596,11 +1638,16 @@
         }
         
         function renderPowerTableForReport(headers, data, container) {
-            // *** FIXED ***: Now this function uses the container passed to it.
+            // **FIXED**: Now this function uses the container passed to it.
             if (!container) { 
-                console.error("renderPowerTableForReport: No container provided."); 
+                // Default to the main UI container if none is provided
+                container = document.getElementById('cobra-power-table-content');
+            }
+            if (!container) { 
+                console.error("renderPowerTableForReport: No container provided or found."); 
                 return; 
             }
+
             if (!data || data.length === 0) {
                 container.innerHTML = `<p class="text-slate-400 p-4">No processed power data to display. Please upload a power consumption file.</p>`;
                 return;
@@ -1851,7 +1898,6 @@
         
         async function captureElementAsPng(element) {
             if (!element) return null;
-            // Use a white background for captures to avoid transparency issues
             const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
             return canvas.toDataURL("image/png");
         }
