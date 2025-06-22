@@ -50,7 +50,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .data-editor-table { width: 100%; min-width: 600px; border-collapse: collapse; margin-top: 1rem; }
-        .data-editor-table th, .data-editor-table td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; word-wrap: break-word; }
+        .data-editor-table th, .data-editor-table td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; }
         .data-editor-table th { background-color: var(--bg-lighter); font-size: 0.8rem; vertical-align: middle; text-align: center; white-space: nowrap; }
         .data-editor-table td { background-color: var(--bg-light); }
         .data-editor-table input, .data-editor-table select {  
@@ -232,10 +232,6 @@
                         <svg class="w-6 h-6 mr-3" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 90 L15 45 Z" fill="#1E1E1E" stroke="#FF5733" stroke-width="4"/><path d="M50 25 C 40 35, 40 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 25 C 60 35, 60 55, 50 65" stroke="#FFC300" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M42 45 L58 45" stroke="#FFC300" stroke-width="5" stroke-linecap="round"/><circle cx="40" cy="35" r="4" fill="#FFFFFF"/><circle cx="60" cy="35" r="4" fill="#FFFFFF"/></svg>
                         Viper
                     </a>
-                    <a href="#" id="tool-mamba" class="tool-selector flex items-center p-3 rounded-lg text-slate-300 hover:bg-white/10">
-                       <svg class="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 21C4 17.134 7.13401 14 11 14C14.866 14 18 17.134 18 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14V3L15 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 21C8 19.3431 9.34315 18 11 18C12.6569 18 14 19.3431 14 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8.02864C8.42398 7.37341 9.06649 6.88373 9.80554 6.6212M14.2233 4.85854C13.593 4.30202 12.825 3.93115 12 3.7915" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Mamba
-                    </a>
                 </nav>
                 <div class="mt-auto">
                     <p class="text-sm text-slate-400 truncate mb-4" id="user-email-display"></p>
@@ -256,7 +252,6 @@
                 
                 <div id="cobra-ui" class="tool-ui hidden"></div>
                 <div id="viper-ui" class="tool-ui hidden"></div>
-                <div id="mamba-ui" class="tool-ui hidden"></div>
             </main>
         </div>
 
@@ -314,7 +309,7 @@
         // Main application initialization function
         async function initializeAndRunApp() {
             const firebaseConfig = {
-                apiKey: "AIzaSyC104s4ck9kSwREUvuE9chFaSokBPBWdwU", // Replace with your actual Firebase config
+                apiKey: "AIzaSyC104s4ck9kSwREUvuE9chFaSokBPBWdwU", // Replace with your Firebase config
                 authDomain: "thermal-engineering-67354.firebaseapp.com",
                 projectId: "thermal-engineering-67354",
                 storageBucket: "thermal-engineering-67354.appspot.com",
@@ -540,11 +535,10 @@
             });
         }
 
-        // Initializes the main application UI (Viper, Cobra, and Mamba tools)
+        // Initializes the main application UI (Viper, Cobra)
         function initializeSercommSuite(user) {
             renderViperUI();
             renderCobraUI();
-            renderMambaUI();
             const mobileToolTitle = document.getElementById('mobile-tool-title');
             document.querySelectorAll('.tool-selector').forEach(selector => {
                 selector.addEventListener('click', (e) => {
@@ -692,18 +686,27 @@
             cobraUI.innerHTML = `
                 <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
                     <div class="mr-4 hidden sm:block"><svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 95 C 20 95, 10 75, 25 60 C 35 50, 65 50, 75 60 C 90 75, 80 95, 60 95 L 40 95 Z" fill="#2C7873"/><path d="M50 70 C 25 70, 25 40, 50 20 C 75 40, 75 70, 50 70 Z" fill="#4A938E" stroke="#FFFFFF" stroke-width="2"/><path d="M50 20 C 40 30, 40 50, 50 60 C 60 50, 60 30, 50 20" fill="#1E1E1E"/><circle cx="46" cy="45" r="4" fill="red"/><circle cx="54" cy="45" r="4" fill="red"/><path d="M48 62 L52 62 L50 70 Z" fill="#FFD700"/></svg></div>
-                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Transformation & Analysis</p></div>
+                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Cobra</h1><p class="text-slate-400 mt-0">Data Analysis & Report Generation</p></div>
                 </div>
 
                 <div id="cobra-setup-area" class="space-y-8">
                     <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
-                        <h3 class="text-xl font-semibold mb-4 text-white">1. Upload Data File</h3>
+                        <h3 class="text-xl font-semibold mb-4 text-white">1a. Upload Thermal Data File</h3>
                         <div class="flex items-center gap-4">
-                            <label for="cobra-file-uploader" class="flex-grow cursor-pointer bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Excel File</label>
+                            <label for="cobra-file-uploader" class="flex-grow cursor-pointer bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Thermal Data File</label>
                             <input type="file" id="cobra-file-uploader" class="hidden" accept=".xlsx, .xls">
-                             <button id="cobra-remove-file" class="bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Remove</button>
+                             <button id="cobra-remove-file" class="bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Remove File</button>
                         </div>
                          <p id="cobra-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
+                    </div>
+
+                    <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                        <h3 class="text-xl font-semibold mb-4 text-white">1b. Upload Power Consumption File</h3>
+                        <div class="flex items-center gap-4">
+                            <label for="power-file-uploader" class="flex-grow cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Power Data File</label>
+                            <input type="file" id="power-file-uploader" class="hidden" accept=".xlsx, .xls">
+                        </div>
+                         <p id="power-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
                     </div>
 
                     <div id="cobra-main-controls" class="hidden">
@@ -720,10 +723,10 @@
                                <div id="cobra-delta-content" class="st-tab-content"></div>
                             </div>
                              <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
-                                  <h3 class="text-xl font-semibold mb-4 text-white">3. Key IC Specifications</h3>
-                                  <div id="cobra-spec-editor-container" class="max-h-[25rem] overflow-y-auto pr-2">
-                                       <p class="p-4 text-center text-slate-500">Select Key ICs from the 'Analysis Parameters' tab to input their specifications here.</p>
-                                  </div>
+                                 <h3 class="text-xl font-semibold mb-4 text-white">3. Key IC Specifications</h3>
+                                 <div id="cobra-spec-editor-container" class="max-h-[25rem] overflow-y-auto pr-2">
+                                     <p class="p-4 text-center text-slate-500">Select Key ICs from the 'Analysis Parameters' tab to input their specifications here.</p>
+                                 </div>
                              </div>
                         </div>
                         <div id="cobra-run-analysis-container" class="border-t border-[var(--border-color)] mt-10 pt-8">
@@ -740,17 +743,23 @@
                          <button data-tab="conclusions" class="st-tab active">Conclusions</button>
                          <button data-tab="table" class="st-tab">Data Table</button>
                          <button data-tab="chart" class="st-tab">Chart</button>
+                         <button data-tab="power-table" class="st-tab">Power Table</button>
+                         <button data-tab="report" class="st-tab">Generate Report</button>
                      </div>
                      <div id="cobra-conclusions-content" class="st-tab-content active"></div>
                      <div id="cobra-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
                      <div id="cobra-chart-content" class="st-tab-content bg-white p-4 md:p-6 rounded-lg h-[450px]"></div>
+                     <div id="cobra-power-table-content" class="st-tab-content bg-[var(--bg-light)] p-4 md:p-6 rounded-lg"></div>
+                     <div id="cobra-report-content" class="st-tab-content"></div>
                 </div>
             `;
+            renderCobraReportTabUI();
             setupCobraEventListeners();
         }
 
         function setupCobraEventListeners() {
             document.getElementById('cobra-file-uploader').addEventListener('change', handleCobraFileUpload);
+            document.getElementById('power-file-uploader').addEventListener('change', handlePowerFileUpload); // New Listener
             document.getElementById('cobra-remove-file').addEventListener('click', resetCobraState);
             document.getElementById('cobra-back-to-setup').addEventListener('click', () => {
                 document.getElementById('cobra-results-area').classList.add('hidden');
@@ -778,7 +787,9 @@
 
         function resetCobraState() {
             document.getElementById('cobra-file-uploader').value = '';
+            document.getElementById('power-file-uploader').value = '';
             document.getElementById('cobra-file-name').textContent = '';
+            document.getElementById('power-file-name').textContent = '';
             document.getElementById('cobra-main-controls').classList.add('hidden');
             document.getElementById('cobra-results-area').classList.add('hidden');
             document.getElementById('cobra-setup-area').classList.remove('hidden');
@@ -793,10 +804,9 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            resetCobraState();
-            document.getElementById('cobra-file-name').textContent = `File: ${file.name}`;
+            document.getElementById('cobra-file-name').textContent = `Thermal Data File: ${file.name}`;
             loader.classList.remove('hidden');
-            loaderText.textContent = 'Pre-analyzing Excel file...';
+            loaderText.textContent = 'Pre-analyzing Thermal Data...';
 
             try {
                 const data = await file.arrayBuffer();
@@ -806,8 +816,33 @@
                 populateCobraControls(cobraState.prestudyData);
                 document.getElementById('cobra-main-controls').classList.remove('hidden');
             } catch (err) {
-                showMessage(`Error processing file: ${err.message}`, 'error');
+                showMessage(`Error processing thermal data file: ${err.message}`, 'error');
                 resetCobraState();
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        async function handlePowerFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('power-file-name').textContent = `Power Data File: ${file.name}`;
+            loader.classList.remove('hidden');
+            loaderText.textContent = 'Processing Power Data...';
+
+            try {
+                const data = await file.arrayBuffer();
+                const powerWorkbook = XLSX.read(data, {type: 'buffer'});
+                const sheetName = powerWorkbook.SheetNames[0]; // Process the first sheet for power data
+                const powerData = processPowerData(powerWorkbook, sheetName);
+                if (powerData.error) throw new Error(powerData.error);
+                cobraState.powerTableResults = powerData;
+                showMessage("Power data processed successfully.", "success");
+            } catch (err) {
+                showMessage(`Error processing power file: ${err.message}`, 'error');
+                document.getElementById('power-file-name').textContent = '';
+                delete cobraState.powerTableResults;
             } finally {
                 loader.classList.add('hidden');
             }
@@ -1020,28 +1055,36 @@
                     const selects = pairDiv.querySelectorAll('select');
                     deltaPairs.push({ baseline: selects[0].value, compare: selects[1].value });
                 });
-
+                
                 const prestudy = cobraState.prestudyData;
                 const sheet = cobraState.workbook.Sheets[prestudy.targetSheetName];
-                const dataRows = XLSX.utils.sheet_to_json(sheet, { header: 1, range: prestudy.headerRowIdx + 1, defval: "" });
-                const analysisData = {};
-                selectedSeries.forEach(cleanedName => {
-                    const rawName = prestudy.cleanedToRawMap[cleanedName];
-                    const colIdx = prestudy.seriesExcelIndices[rawName];
-                    analysisData[cleanedName] = dataRows.map(row => parseFloat(row[colIdx]));
-                });
-                const componentNames = dataRows.map(row => cleanComponentDisplayName(row[prestudy.componentColIdx]));
+
+                const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+                const fullDataRows = jsonSheet.slice(prestudy.headerRowIdx + 1); 
+
+                const componentNames = fullDataRows.map(row => cleanComponentDisplayName(row[prestudy.componentColIdx]));
+
                 const tableData = [], keyIcData = {};
                 selectedIcs.forEach(ic => {
-                    const idx = componentNames.indexOf(ic);
+                    const idx = componentNames.indexOf(ic); 
                     if (idx !== -1) {
                         const temps = {};
-                        selectedSeries.forEach(sName => { temps[sName] = analysisData[sName][idx]; });
+                        const dataRow = fullDataRows[idx]; 
+
+                        selectedSeries.forEach(sName => {
+                             const rawSeriesName = prestudy.cleanedToRawMap[sName];
+                             const seriesColIdx = prestudy.seriesExcelIndices[rawSeriesName];
+                             const tempVal = dataRow[seriesColIdx];
+                             temps[sName] = (tempVal !== null && tempVal !== undefined) ? parseFloat(tempVal) : null;
+                        });
                         keyIcData[ic] = temps;
                         tableData.push({ Component: ic, ...temps });
                     }
                 });
-                if (tableData.length === 0) throw new Error("No data found for the selected Key ICs.");
+
+                if (tableData.length === 0 && selectedIcs.length > 0) {
+                    throw new Error("No data found for the selected Key ICs. Check for mismatches in component names.");
+                }
 
                 const results = {}, conclusionData = [];
                 specData.forEach(specRow => {
@@ -1104,7 +1147,9 @@
                 });
                 
                 cobraState.analysisResults = { conclusionData, tableData: finalTableData, chartData: tableData, selectedSeries };
+                
                 renderCobraResults(cobraState.analysisResults);
+
                 document.getElementById('cobra-setup-area').classList.add('hidden');
                 document.getElementById('cobra-results-area').classList.remove('hidden');
 
@@ -1120,7 +1165,11 @@
             renderCobraConclusions(results.conclusionData);
             renderCobraTable(results.tableData, document.getElementById('cobra-table-content'));
             renderCobraChart(results.chartData, results.selectedSeries, document.getElementById('cobra-chart-content'));
-            // Default to conclusions tab
+            // Render the power table if data exists
+            if (cobraState.powerTableResults) {
+                renderPowerTableForReport(cobraState.powerTableResults.headers, cobraState.powerTableResults.data, document.getElementById('cobra-power-table-content'));
+            }
+
             document.querySelectorAll('#cobra-results-tabs .st-tab').forEach(t => t.classList.remove('active'));
             document.querySelector('#cobra-results-tabs .st-tab[data-tab="conclusions"]').classList.add('active');
             document.querySelectorAll('#cobra-results-area .st-tab-content').forEach(c => c.classList.remove('active'));
@@ -1162,11 +1211,10 @@
                 });
                 summaryHtml += `</tbody></table></div>`;
             });
-            summaryHtml += '</div>'; // close grid
+            summaryHtml += '</div>';
             container.innerHTML = summaryHtml;
         }
 
-        // MODIFIED: Takes a container element to render into
         function renderCobraTable(data, container) {
             if (!container) { console.error("renderCobraTable: No container provided."); return; }
             if (!data || data.length === 0) {
@@ -1195,6 +1243,7 @@
                 th.style.backgroundColor = '#606060'; th.style.color = 'white'; th.style.padding = '10px';
                 th.style.border = '1px solid #ccc'; th.style.textAlign = 'center'; th.style.fontWeight = 'bold';
                 th.style.verticalAlign = 'middle';
+                th.style.whiteSpace = 'nowrap'; // Prevent header text from wrapping
                 headerRow.appendChild(th);
             });
 
@@ -1204,12 +1253,15 @@
                 headers.forEach(h => {
                     const td = tr.insertCell();
                     let cellValue = row[h];
-                    if (typeof cellValue === 'number') cellValue = cellValue.toFixed(1);
-                    if(cellValue === null || cellValue === undefined || (typeof cellValue === 'number' && Number.isNaN(cellValue))) cellValue = 'N/A';
+                    if (typeof cellValue === 'number' && !Number.isInteger(cellValue)) {
+                        cellValue = cellValue.toFixed(1);
+                    }
+                    if(cellValue === null || cellValue === undefined || (typeof cellValue === 'number' && Number.isNaN(cellValue))) {
+                        cellValue = 'N/A';
+                    }
                     td.textContent = cellValue;
                     td.style.padding = '10px'; 
                     td.style.border = '1px solid #ccc'; 
-                    // CHANGE: Center all cells horizontally and vertically
                     td.style.textAlign = 'center';
                     td.style.verticalAlign = 'middle';
                     td.style.backgroundColor = '#f2f2f2'; 
@@ -1225,8 +1277,8 @@
             container.querySelector('#cobra-download-excel').addEventListener('click', downloadCobraExcel);
             container.querySelector('#cobra-download-png').addEventListener('click', () => {
                 html2canvas(tableContainer.querySelector('table')).then(canvas => {
-                     const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
-                     a.download = 'cobra-table.png'; a.click();
+                    const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
+                    a.download = 'cobra-table.png'; a.click();
                 });
             });
         }
@@ -1313,8 +1365,8 @@
                 allData = allData.concat(ds.data.filter(v => v !== null && !isNaN(v)).map(v => parseFloat(v)));
             });
 
-            const minValue = Math.min(...allData);
-            const maxValue = Math.max(...allData);
+            const minValue = allData.length > 0 ? Math.min(...allData) : 0;
+            const maxValue = allData.length > 0 ? Math.max(...allData) : 100;
             const yAxisMin = allData.length > 0 ? Math.floor(minValue * 0.9) : 0;
             const yAxisMax = allData.length > 0 ? Math.ceil(maxValue * 1.1) : 100;
 
@@ -1368,329 +1420,189 @@
             return chartInstance;
         }
 
-        // --- Mamba Tool Functions ---
-        const mambaState = {};
-
-        function renderMambaUI() {
-            const mambaUI = document.getElementById('mamba-ui');
-            mambaUI.innerHTML = `
-                <div class="flex items-center border-b border-[var(--border-color)] pb-4 mb-6 md:mb-8">
-                    <div class="mr-4 hidden sm:block"><svg class="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 21C4 17.134 7.13401 14 11 14C14.866 14 18 17.134 18 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14V3L15 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 21C8 19.3431 9.34315 18 11 18C12.6569 18 14 19.3431 14 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8.02864C8.42398 7.37341 9.06649 6.88373 9.80554 6.6212M14.2233 4.85854C13.593 4.30202 12.825 3.93115 12 3.7915" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-                    <div><h1 class="text-2xl md:text-3xl font-bold text-white mb-0">Mamba</h1><p class="text-slate-400 mt-0">PowerPoint Content Generation</p></div>
-                </div>
-                 <div class="space-y-8">
-                    <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
-                        <h3 class="text-xl font-semibold mb-4 text-white">1. Upload Power Data Excel File</h3>
-                        <div class="flex items-center gap-4">
-                            <label for="mamba-file-uploader" class="flex-grow cursor-pointer bg-[var(--accent-blue)] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Power Data File</label>
-                            <input type="file" id="mamba-file-uploader" class="hidden" accept=".xlsx, .xls">
-                        </div>
-                         <p id="mamba-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
-                    </div>
-                    <div id="mamba-sheet-selector-section" class="hidden bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
-                        <h3 class="text-xl font-semibold mb-4 text-white">2. Select Sheet to Analyze</h3>
-                        <select id="mamba-sheet-selector" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition"></select>
-                    </div>
-                    <div id="mamba-power-table-section" class="hidden">
-                         <h3 class="text-xl font-semibold mb-4 text-white">3. Processed Power Table</h3>
-                         <div id="mamba-power-table-container"></div>
-                    </div>
-                    <div id="mamba-ppt-generation-section" class="hidden bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
-                         <h3 class="text-xl font-semibold mb-4 text-white">4. Generate PowerPoint Report</h3>
-                         <div class="mb-6">
-                            <label for="ppt-template-uploader" class="block text-sm font-medium text-slate-300 mb-2">Upload PPTX Template</label>
-                            <div class="flex items-center gap-4">
-                                <label for="ppt-template-uploader" class="flex-grow cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Template File</label>
-                                <input type="file" id="ppt-template-uploader" class="hidden" accept=".pptx">
-                            </div>
-                             <p id="ppt-template-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
-                        </div>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="ppt-project-name" class="block text-sm font-medium text-slate-300 mb-1">Project Name</label>
-                                    <input type="text" id="ppt-project-name" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., AP4060 Improvement Study">
-                                </div>
-                                <div>
-                                    <label for="ppt-report-date" class="block text-sm font-medium text-slate-300 mb-1">Report Date</label>
-                                    <input type="date" id="ppt-report-date" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
-                                </div>
-                                <div>
-                                    <label for="ppt-ambient-temp" class="block text-sm font-medium text-slate-300 mb-1">Ambient Temperature (°C)</label>
-                                    <input type="number" id="ppt-ambient-temp" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" value="25">
-                                </div>
-                                <div>
-                                    <label for="ppt-total-power" class="block text-sm font-medium text-slate-300 mb-1">Total System Power (W)</label>
-                                    <input type="number" id="ppt-total-power" step="0.1" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., 15.5">
-                                </div>
-                            </div>
-                            <div class="space-y-4">
-                                <div>
-                                     <label class="block text-sm font-medium text-slate-300 mb-1">Convection</label>
-                                     <div class="flex gap-4">
-                                        <label class="flex items-center"><input type="radio" name="ppt-convection" value="Natural" class="mr-2 accent-[var(--accent-blue)]" checked>Natural</label>
-                                        <label class="flex items-center"><input type="radio" name="ppt-convection" value="Forced" class="mr-2 accent-[var(--accent-blue)]">Forced</label>
-                                     </div>
-                                </div>
-                                 <div>
-                                      <label class="block text-sm font-medium text-slate-300 mb-1">Orientation</label>
-                                      <div class="flex flex-col gap-2">
-                                         <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Desktop" class="mr-2 accent-[var(--accent-blue)]" checked>Desktop</label>
-                                         <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Wall mount" class="mr-2 accent-[var(--accent-blue)]">Wall mount</label>
-                                         <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Ceiling" class="mr-2 accent-[var(--accent-blue)]">Ceiling</label>
-                                      </div>
-                                 </div>
-                            </div>
-                         </div>
-                         <div class="mt-8">
-                            <button id="mamba-generate-ppt" class="w-full bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition shadow-lg shadow-green-500/10">Generate PPT Report</button>
-                         </div>
-                    </div>
-                 </div>
-            `;
-            setupMambaEventListeners();
-        }
+        // --- Integrated Report Generation Functions ---
         
-        function setupMambaEventListeners() {
-            document.getElementById('mamba-file-uploader').addEventListener('change', handleMambaFileUpload);
-            const pptTemplateUploader = document.getElementById('ppt-template-uploader');
-            if(pptTemplateUploader) {
-                pptTemplateUploader.addEventListener('change', (e) => {
-                    const fileName = e.target.files[0]?.name || 'No file selected';
-                    document.getElementById('ppt-template-file-name').textContent = fileName;
-                });
-            }
-            const pptButton = document.getElementById('mamba-generate-ppt');
-            if(pptButton) {
-                pptButton.addEventListener('click', generateMambaPptWithBackend);
-            }
-        }
-
-        async function handleMambaFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            document.getElementById('mamba-file-name').textContent = `File: ${file.name}`;
-            loader.classList.remove('hidden');
-            loaderText.textContent = 'Reading Excel file...';
-
-            document.getElementById('mamba-sheet-selector-section').classList.add('hidden');
-            document.getElementById('mamba-power-table-section').classList.add('hidden');
-            document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
-
-            try {
-                const data = await file.arrayBuffer();
-                mambaState.workbook = XLSX.read(data, {type: 'buffer'});
-                if (!mambaState.workbook.SheetNames || mambaState.workbook.SheetNames.length === 0) {
-                    throw new Error("Excel file contains no sheets.");
-                }
-
-                renderMambaSheetSelector(mambaState.workbook.SheetNames);
-                document.getElementById('mamba-sheet-selector-section').classList.remove('hidden');
-                
-                analyzeMambaSheet(mambaState.workbook.SheetNames[0]);
-
-            } catch (err) {
-                showMessage(`Error reading file: ${err.message}`, 'error');
-                document.getElementById('mamba-file-name').textContent = '';
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-
-        function renderMambaSheetSelector(sheetNames) {
-            const selectEl = document.getElementById('mamba-sheet-selector');
-            selectEl.innerHTML = '<option value="">-- Select a Sheet --</option>';
-            sheetNames.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                selectEl.appendChild(option);
-            });
-            selectEl.value = sheetNames[0];
-
-            selectEl.onchange = (event) => {
-                const selectedSheet = event.target.value;
-                if (selectedSheet && mambaState.workbook) {
-                    analyzeMambaSheet(selectedSheet);
-                } else {
-                    document.getElementById('mamba-power-table-section').classList.add('hidden');
-                    document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
-                }
-            };
-        }
-
-        function analyzeMambaSheet(sheetName) {
-            loader.classList.remove('hidden');
-            loaderText.textContent = `Processing sheet: ${sheetName}...`;
-            try {
-                const processedData = processPowerData(mambaState.workbook, sheetName);
-                if (processedData.error) throw new Error(processedData.error);
-                
-                mambaState.analysisResults = processedData;
-                renderMambaPowerTable(processedData.headers, processedData.data, document.getElementById('mamba-power-table-container'));
-                document.getElementById('mamba-power-table-section').classList.remove('hidden');
-                document.getElementById('mamba-ppt-generation-section').classList.remove('hidden');
-            } catch (err) {
-                showMessage(`Error processing sheet: ${err.message}`, 'error');
-                document.getElementById('mamba-power-table-section').classList.add('hidden');
-                document.getElementById('mamba-ppt-generation-section').classList.add('hidden');
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-
         function processPowerData(workbook, sheetName) {
+            // 1. Find Headers
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) return { error: `Sheet "${sheetName}" not found.` };
+
+            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+            let headerRowIndex = -1;
+            let colMap = {};
+            const requiredHeaderKeys = ["Function", "DevicePN", "AvgPower"];
             const headerKeywords = {
                 Function: ["FUNCTION"],
                 DevicePN: ["DEVICE", "P/N"],
-                AvgPower: ["AVG"],
+                AvgPower: ["AVG"], 
                 PeakPower: ["PEAK"]
             };
-            const requiredHeaderKeys = ["Function", "DevicePN", "AvgPower"];
             
-            const sheet = workbook.Sheets[sheetName];
-            if (!sheet) return { error: `Sheet "${sheetName}" not found.` };
-            const jsonSheet = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-            
-            let headerRowIndex = -1;
-            let colMap = {};
-
+            // *** FIXED HEADER FINDING LOGIC ***
             for (let i = 0; i < 20 && i < jsonSheet.length; i++) {
                 const row = jsonSheet[i];
                 if (!row) continue;
-                
-                const tempHeaderMap = {};
-                let foundKeywords = new Set();
 
+                const tempColMap = {};
+                const requiredFound = new Set();
+                
                 row.forEach((cell, j) => {
                     const cellStr = String(cell || '').toUpperCase();
                     if (!cellStr) return;
 
                     for (const key in headerKeywords) {
-                        if (tempHeaderMap[key]) continue;
-                        const kws = headerKeywords[key];
-                        if (kws.every(kw => cellStr.includes(kw))) {
-                            tempHeaderMap[key] = { index: j, name: cell };
-                            foundKeywords.add(key);
+                        if (headerKeywords[key].every(kw => cellStr.includes(kw))) {
+                            if (!tempColMap[key]) {
+                                tempColMap[key] = { index: j, name: String(cell) };
+                                if (requiredHeaderKeys.includes(key)) {
+                                    requiredFound.add(key);
+                                }
+                            }
                         }
                     }
                 });
 
-                if (requiredHeaderKeys.every(key => foundKeywords.has(key))) {
+                if (requiredHeaderKeys.length === requiredFound.size) {
                     headerRowIndex = i;
-                    colMap = tempHeaderMap;
-                    break;
+                    colMap = tempColMap;
+                    break; 
                 }
             }
 
             if (headerRowIndex === -1) {
-                return { error: `A valid header row was not found in sheet "${sheetName}". Ensure it contains 'Function', 'Device P/N', and 'AVG'.` };
+                return { error: `A valid header row was not found. Please ensure it contains 'Function', 'Device P/N', and 'AVG'.` };
             }
+
+            // 2. Parse all data rows using the found header
+            const dataRows = XLSX.utils.sheet_to_json(sheet, { range: headerRowIndex, defval: null, blankrows: false });
             
+            // 3. Initialize variables and define keywords
             const hasPeakPower = !!colMap.PeakPower;
-            const dataRows = jsonSheet.slice(headerRowIndex + 1);
+            const fnHeader = colMap.Function.name;
+            const avgHeader = colMap.AvgPower.name;
+            const peakHeader = hasPeakPower ? colMap.PeakPower.name : null;
             
+            const femGroups = new Map();
+            let otherComponents = [];
+            let dcPower = { avg: 0, peak: 0 };
+            let poePower = { avg: 0, peak: 0 };
+            let totalPowerRows = [];
             const poeKeywords = ['BRIDGE', 'POE', 'PSE'];
             const dcKeywords = ['DC', 'LDO'];
-            const voltageRegex = /\d+(\.\d+)?V/i;
+            const voltageRegex = /\d+(\.\d+)?V/i; // Case-insensitive 'V'
 
-            let otherComponents = [];
-            let totalPowerSourceRows = [];
-            let poeAvgPowerSum = 0, poePeakPowerSum = 0;
-            let dcAvgPowerSum = 0, dcPeakPowerSum = 0;
-            
+            // 4. Categorize each row from the Excel sheet
             dataRows.forEach(row => {
-                if (!row || row[colMap.Function.index] === null) return;
-                
-                const functionName = String(row[colMap.Function.index] || "");
-                const functionNameUpper = functionName.toUpperCase();
-                const avgPowerVal = row[colMap.AvgPower.index];
-                
-                if (!functionName.trim() || avgPowerVal === null || avgPowerVal === '' || isNaN(parseFloat(avgPowerVal))) {
-                    return; 
+                const functionName = String(row[fnHeader] || '').trim();
+                const avgPowerVal = row[avgHeader];
+
+                if (!functionName || avgPowerVal === null || avgPowerVal === '' || isNaN(parseFloat(avgPowerVal))) {
+                    return; // Skip empty or invalid rows
                 }
 
-                if (functionNameUpper.includes('RJ45 WITH TRANSFORMER')) {
-                    return;
-                }
-
+                const functionNameUpper = functionName.toUpperCase().replace(/_/g, " ");
+                
                 if (functionNameUpper.includes('TOTAL POWER')) {
-                    totalPowerSourceRows.push(row);
-                    return;
+                    totalPowerRows.push(row);
+                } else if (poeKeywords.some(kw => functionNameUpper.includes(kw))) {
+                     poePower.avg += parseFloat(row[avgHeader]) || 0;
+                     if (hasPeakPower) poePower.peak += parseFloat(row[peakHeader]) || 0;
+                } else if (dcKeywords.some(kw => functionNameUpper.includes(kw)) || voltageRegex.test(functionNameUpper)) {
+                     dcPower.avg += parseFloat(row[avgHeader]) || 0;
+                     if (hasPeakPower) dcPower.peak += parseFloat(row[peakHeader]) || 0;
+                } else if (functionNameUpper.includes('FEM')) {
+                    const match = functionNameUpper.match(/^(\d+(\.\d+)?G\s*FEM)/);
+                    if (match) {
+                        const baseName = match[1]; 
+                        if (!femGroups.has(baseName)) {
+                            femGroups.set(baseName, []);
+                        }
+                        femGroups.get(baseName).push(row);
+                    } else {
+                        otherComponents.push(row);
+                    }
+                } else if (!functionNameUpper.includes('RJ45 WITH TRANSFORMER')) {
+                    otherComponents.push(row);
                 }
-                
-                const isPoeRow = poeKeywords.some(kw => functionNameUpper.includes(kw));
-                if (isPoeRow) {
-                    poeAvgPowerSum += parseFloat(avgPowerVal) || 0;
-                    if (hasPeakPower) poePeakPowerSum += parseFloat(row[colMap.PeakPower.index]) || 0;
-                    return;
-                }
-                
-                const isDcRow = dcKeywords.some(kw => functionNameUpper.includes(kw)) || voltageRegex.test(functionName);
-                if (isDcRow) {
-                    dcAvgPowerSum += parseFloat(avgPowerVal) || 0;
-                    if (hasPeakPower) dcPeakPowerSum += parseFloat(row[colMap.PeakPower.index]) || 0;
-                    return;
-                }
-                
-                otherComponents.push(row);
             });
             
-            const finalHeaders = [colMap.Function.name, colMap.DevicePN.name, colMap.AvgPower.name];
-            if (hasPeakPower) finalHeaders.push(colMap.PeakPower.name);
-            
-            const mapRow = (sourceRow) => {
-                const newRow = {};
-                finalHeaders.forEach(headerName => {
-                    const keyName = Object.keys(colMap).find(k => colMap[k].name === headerName);
-                    if (keyName) {
-                        newRow[headerName] = sourceRow[colMap[keyName].index];
-                    }
-                });
-                return newRow;
-            };
+            // 5. Group insignificant power consumers (<0.1W) from the 'otherComponents' list
+            const significantComponents = [];
+            const otherComponentsSum = { avg: 0, peak: 0 };
+            otherComponents.forEach(row => {
+                const avg = parseFloat(row[avgHeader]) || 0;
+                const peak = hasPeakPower ? (parseFloat(row[peakHeader]) || 0) : 0;
+                
+                if (avg < 0.1 && peak < 0.1) {
+                    otherComponentsSum.avg += avg;
+                    otherComponentsSum.peak += peak;
+                } else {
+                    significantComponents.push(row);
+                }
+            });
 
-            let processedData = otherComponents.map(mapRow);
-            
-            if (poeAvgPowerSum > 0) {
-                const poePowerAllRow = {};
-                finalHeaders.forEach(h => poePowerAllRow[h] = null);
-                poePowerAllRow[finalHeaders[0]] = "PoE POWER ALL";
-                poePowerAllRow[finalHeaders[2]] = poeAvgPowerSum;
-                if (hasPeakPower) poePowerAllRow[finalHeaders[3]] = poePeakPowerSum;
-                processedData.push(poePowerAllRow);
+            // 6. Build the final data list, starting with significant components and FEM groups
+            let finalData = [...significantComponents];
+
+            femGroups.forEach((rows, baseName) => {
+                if (rows.length > 1) { 
+                    const summary = { [fnHeader]: `${baseName.trim()} All`, [colMap.DevicePN.name]: '-', [avgHeader]: 0 };
+                    if (hasPeakPower) summary[peakHeader] = 0;
+                    rows.forEach(row => {
+                        summary[avgHeader] += parseFloat(row[avgHeader]) || 0;
+                        if (hasPeakPower) summary[peakHeader] += parseFloat(row[peakHeader]) || 0;
+                    });
+                    finalData.push(summary);
+                } else {
+                    finalData.push(...rows);
+                }
+            });
+
+            // 7. Add the summary rows in the desired order
+            const pnHeader = colMap.DevicePN.name;
+
+            if (dcPower.avg > 0 || (hasPeakPower && dcPower.peak > 0)) {
+               const dcRow = { [fnHeader]: "DC POWER ALL", [pnHeader]: null, [avgHeader]: dcPower.avg };
+               if (hasPeakPower) dcRow[peakHeader] = dcPower.peak;
+               finalData.push(dcRow);
             }
 
-            if (dcAvgPowerSum > 0) {
-                const dcPowerAllRow = {};
-                finalHeaders.forEach(h => dcPowerAllRow[h] = null);
-                dcPowerAllRow[finalHeaders[0]] = "DC POWER ALL";
-                dcPowerAllRow[finalHeaders[2]] = dcAvgPowerSum;
-                if (hasPeakPower) dcPowerAllRow[finalHeaders[3]] = dcPeakPowerSum;
-                processedData.push(dcPowerAllRow);
-            }
-            
-            if (totalPowerSourceRows.length > 0) {
-                 totalPowerSourceRows.sort((a, b) => {
-                    const nameA = String(a[colMap.Function.index] || '').toUpperCase();
-                    const nameB = String(b[colMap.Function.index] || '').toUpperCase();
-                    if (nameA < nameB) return -1;
-                    if (nameA > nameB) return 1;
-                    return 0;
-                }).forEach(sourceRow => {
-                    processedData.push(mapRow(sourceRow));
-                });
+            if (otherComponentsSum.avg > 0 || (hasPeakPower && otherComponentsSum.peak > 0)) {
+                const otherRow = { [fnHeader]: "Other Components", [pnHeader]: null, [avgHeader]: otherComponentsSum.avg };
+                if (hasPeakPower) otherRow[peakHeader] = otherComponentsSum.peak;
+                finalData.push(otherRow);
             }
 
-            return { headers: finalHeaders, data: processedData };
+            if (poePower.avg > 0 || (hasPeakPower && poePower.peak > 0)) {
+               const poeRow = { [fnHeader]: "PoE POWER ALL", [pnHeader]: null, [avgHeader]: poePower.avg };
+               if (hasPeakPower) poeRow[peakHeader] = poePower.peak;
+               finalData.push(poeRow);
+            }
+            
+            // 8. Add Total rows at the very end
+            totalPowerRows.sort((a,b) => (String(a[fnHeader] || '').toUpperCase() > String(b[fnHeader] || '').toUpperCase()) ? 1 : -1);
+            finalData.push(...totalPowerRows);
+            
+            // 9. Determine final headers and return the result
+            const visibleHeaders = [colMap.Function.name, colMap.DevicePN.name, colMap.AvgPower.name];
+            if (hasPeakPower) {
+                const hasAnyPeakPower = finalData.some(row => (parseFloat(row[peakHeader]) || 0) > 0);
+                if(hasAnyPeakPower) {
+                    visibleHeaders.push(colMap.PeakPower.name);
+                }
+            }
+            
+            return { headers: visibleHeaders, data: finalData };
         }
-
-        // MODIFIED: Takes a container element and centers text
-        function renderMambaPowerTable(headers, data, container) {
-            if (!container) { console.error("renderMambaPowerTable: No container provided."); return; }
+        
+        function renderPowerTableForReport(headers, data, container) {
+            // *** FIXED ***: Now this function uses the container passed to it.
+            if (!container) { 
+                console.error("renderPowerTableForReport: No container provided."); 
+                return; 
+            }
             if (!data || data.length === 0) {
-                container.innerHTML = `<p class="text-slate-400 p-4">No processed power data to display.</p>`;
+                container.innerHTML = `<p class="text-slate-400 p-4">No processed power data to display. Please upload a power consumption file.</p>`;
                 return;
             }
             
@@ -1712,6 +1624,7 @@
                 th.style.backgroundColor = '#606060'; th.style.color = 'white'; th.style.padding = '10px';
                 th.style.border = '1px solid #ccc'; th.style.textAlign = 'center'; th.style.fontWeight = 'bold';
                 th.style.verticalAlign = 'middle';
+                th.style.whiteSpace = 'nowrap';
                 headerRow.appendChild(th);
             });
 
@@ -1720,8 +1633,7 @@
                 const tr = tbody.insertRow();
                 const functionName = String(row[headers[0]] || '').toUpperCase();
                 const isTotalRow = functionName.includes('TOTAL POWER');
-                const isDcRow = functionName.includes('DC POWER ALL');
-                const isPoeRow = functionName.includes('POE POWER ALL');
+                const isSummationRow = functionName.includes('ALL') || functionName.includes('OTHER COMPONENTS');
 
                 headers.forEach(h => {
                     const td = tr.insertCell();
@@ -1735,13 +1647,13 @@
                     td.textContent = cellValue;
                     td.style.padding = '10px'; 
                     td.style.border = '1px solid #ccc'; 
-                    // CHANGE: Center all cells horizontally and vertically
                     td.style.textAlign = 'center';
                     td.style.verticalAlign = 'middle';
                     td.style.backgroundColor = '#f2f2f2'; 
                     td.style.color = '#333';
+                    td.style.whiteSpace = 'nowrap';
 
-                    if(isDcRow || isPoeRow || isTotalRow) {
+                    if(isTotalRow || isSummationRow) {
                         td.style.fontWeight = 'bold';
                     }
                     if(isTotalRow) {
@@ -1753,27 +1665,98 @@
             tableContainer.appendChild(table);
         }
 
-        async function generateMambaPptWithBackend() {
+        function renderCobraReportTabUI() {
+            const reportUI = document.getElementById('cobra-report-content');
+            reportUI.innerHTML = `
+                <div class="bg-[var(--bg-light)] p-6 rounded-xl border border-[var(--border-color)]">
+                    <h3 class="text-xl font-semibold mb-4 text-white">Generate PowerPoint Report</h3>
+                    <div class="mb-6">
+                        <label for="ppt-template-uploader" class="block text-sm font-medium text-slate-300 mb-2">Upload PPTX Template</label>
+                        <div class="flex items-center gap-4">
+                            <label for="ppt-template-uploader" class="flex-grow cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg text-sm text-center transition">Select Template File</label>
+                            <input type="file" id="ppt-template-uploader" class="hidden" accept=".pptx">
+                        </div>
+                        <p id="ppt-template-file-name" class="text-sm text-slate-400 mt-3 truncate h-5"></p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="ppt-project-name" class="block text-sm font-medium text-slate-300 mb-1">Project Name</label>
+                                <input type="text" id="ppt-project-name" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., AP4060 Improvement Study">
+                            </div>
+                            <div>
+                                <label for="ppt-report-date" class="block text-sm font-medium text-slate-300 mb-1">Report Date</label>
+                                <input type="date" id="ppt-report-date" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition">
+                            </div>
+                            <div>
+                                <label for="ppt-ambient-temp" class="block text-sm font-medium text-slate-300 mb-1">Ambient Temperature (°C)</label>
+                                <input type="number" id="ppt-ambient-temp" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" value="25">
+                            </div>
+                            <div>
+                                <label for="ppt-total-power" class="block text-sm font-medium text-slate-300 mb-1">Total System Power (W)</label>
+                                <input type="number" id="ppt-total-power" step="0.1" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition" placeholder="e.g., 15.5">
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                             <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-1">Convection</label>
+                                <div class="flex gap-4">
+                                   <label class="flex items-center"><input type="radio" name="ppt-convection" value="Natural" class="mr-2 accent-[var(--accent-blue)]" checked>Natural</label>
+                                   <label class="flex items-center"><input type="radio" name="ppt-convection" value="Forced" class="mr-2 accent-[var(--accent-blue)]">Forced</label>
+                                </div>
+                            </div>
+                            <div>
+                               <label class="block text-sm font-medium text-slate-300 mb-1">Orientation</label>
+                               <div id="orientation-checkbox-group" class="flex flex-col gap-2">
+                                  <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Desktop" class="mr-2 accent-[var(--accent-blue)]" checked>Desktop</label>
+                                  <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Wall mount" class="mr-2 accent-[var(--accent-blue)]">Wall mount</label>
+                                  <label class="flex items-center"><input type="checkbox" name="ppt-orientation" value="Ceiling" class="mr-2 accent-[var(--accent-blue)]">Ceiling</label>
+                               </div>
+                           </div>
+                            <div>
+                                <label class="flex items-center"><input type="checkbox" id="ppt-include-thermal-design" class="mr-2 accent-[var(--accent-blue)]" checked>Include Thermal Design on Cover</label>
+                           </div>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <button id="generate-ppt-button" class="w-full bg-[var(--accent-green)] hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition shadow-lg shadow-green-500/10">Generate PPT Report</button>
+                    </div>
+                </div>`;
+            setupCobraReportTabEventListeners();
+        }
+
+        function setupCobraReportTabEventListeners() {
+            const pptTemplateUploader = document.getElementById('ppt-template-uploader');
+            if(pptTemplateUploader) {
+                pptTemplateUploader.addEventListener('change', (e) => {
+                    const fileName = e.target.files[0]?.name || 'No file selected';
+                    document.getElementById('ppt-template-file-name').textContent = fileName;
+                });
+            }
+            const pptButton = document.getElementById('generate-ppt-button');
+            if(pptButton) {
+                pptButton.addEventListener('click', generatePptFromCobraData);
+            }
+        }
+
+        async function generatePptFromCobraData() {
+            if (!cobraState.analysisResults || !cobraState.powerTableResults) {
+                showMessage("Please upload and analyze both Thermal and Power data before generating a report.", "error");
+                return;
+            }
+
             const projectName = document.getElementById('ppt-project-name').value;
             let reportDateInput = document.getElementById('ppt-report-date').value;
             const ambientTemp = document.getElementById('ppt-ambient-temp').value;
             const totalPower = document.getElementById('ppt-total-power').value;
             const convection = document.querySelector('input[name="ppt-convection"]:checked')?.value;
-            
-            // CHANGE: Read multiple checkbox values
             const orientation = Array.from(document.querySelectorAll('input[name="ppt-orientation"]:checked'))
                                      .map(cb => cb.value)
                                      .join(', ');
-
             const templateFile = document.getElementById('ppt-template-uploader').files[0];
             
             if (!projectName || !reportDateInput || !ambientTemp || !totalPower || !convection || !orientation || !templateFile) {
                 showMessage("Please fill in all fields, select an orientation, and upload a PPTX template.", "error");
-                return;
-            }
-
-            if (!mambaState.analysisResults || !cobraState.analysisResults) {
-                showMessage("Mamba or Cobra analysis data is missing. Please run analyses in both tools first.", "error");
                 return;
             }
             
@@ -1785,42 +1768,51 @@
             loader.classList.remove('hidden');
             
             try {
-                loaderText.textContent = "Capturing tables and charts... (1/3)";
-                const { mambaTableDataUrl, cobraTableDataUrl, cobraChartDataUrl } = await captureAllImagesForPPT();
+                loaderText.textContent = "Processing data visualizations... (1/3)";
+                const { cobraTableDataUrl, cobraChartDataUrl, powerTableDataUrl } = await captureAllImagesForPPT();
+                const templateBase64 = await fileToBase64(templateFile);
 
                 const MIN_IMAGE_SIZE = 500;
-                if (!mambaTableDataUrl || mambaTableDataUrl.length < MIN_IMAGE_SIZE) {
-                     throw new Error("Image conversion failed for Mamba Power Table.");
-                }
-                 if (!cobraTableDataUrl || cobraTableDataUrl.length < MIN_IMAGE_SIZE) {
-                     throw new Error("Image conversion failed for Cobra Data Table.");
-                }
-                 if (!cobraChartDataUrl || cobraChartDataUrl.length < MIN_IMAGE_SIZE) {
-                     throw new Error("Image conversion failed for Cobra Chart.");
-                }
-
+                if (!powerTableDataUrl || powerTableDataUrl.length < MIN_IMAGE_SIZE) throw new Error("Image conversion failed for Power Table.");
+                if (!cobraTableDataUrl || cobraTableDataUrl.length < MIN_IMAGE_SIZE) throw new Error("Image conversion failed for Cobra Data Table.");
+                if (!cobraChartDataUrl || cobraChartDataUrl.length < MIN_IMAGE_SIZE) throw new Error("Image conversion failed for Cobra Chart.");
+                if (!templateBase64 || templateBase64.length < MIN_IMAGE_SIZE) throw new Error("Failed to read template file.");
+                
                 loaderText.textContent = "Building report... (2/3)";
-                const formData = new FormData();
-                formData.append('template', templateFile);
-                formData.append('projectName', projectName);
-                formData.append('reportDate', reportDate);
-                formData.append('ambientTemp', ambientTemp);
-                formData.append('totalPower', totalPower);
-                formData.append('convection', convection);
-                formData.append('orientation', orientation);
-                formData.append('mambaTableImage', mambaTableDataUrl);
-                formData.append('cobraTableImage', cobraTableDataUrl);
-                formData.append('cobraChartImage', cobraChartDataUrl);
-
+                
+                const payload = {
+                    templateBase64: templateBase64,
+                    "Project Name": projectName,
+                    "Date": reportDate,
+                    "includeThermalDesign": document.getElementById('ppt-include-thermal-design')?.checked,
+                    "ambientTemp": ambientTemp,
+                    "totalPower": totalPower,
+                    "convection": convection,
+                    "orientation": orientation,
+                    mambaTableImage: powerTableDataUrl, 
+                    cobraTableImage: cobraTableDataUrl,
+                    cobraChartImage: cobraChartDataUrl,
+                };
+                
+                console.log("Payload sent to backend:", JSON.stringify(Object.keys(payload)));
+                
                 loaderText.textContent = "Sending data to backend for processing... (3/3)";
                 const response = await fetch('http://127.0.0.1:5001/generate_ppt', {
                     method: 'POST',
-                    body: formData,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
                 });
 
                 if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error || `Server responded with status: ${response.status}`);
+                    let backendErrorMsg = `Backend Error (HTTP ${response.status})`;
+                    try {
+                        const errData = await response.json();
+                        backendErrorMsg = errData.error || JSON.stringify(errData);
+                    } catch(e) {
+                        backendErrorMsg = await response.text();
+                    }
+                    backendErrorMsg += "\nPlease check the backend (app.py) console output for detailed error information.";
+                    throw new Error(backendErrorMsg);
                 }
                 
                 const blob = await response.blob();
@@ -1838,26 +1830,50 @@
 
             } catch (error) {
                 console.error("Error during PPT generation:", error);
-                showMessage(`Failed to generate PowerPoint: ${error.message}`, "error");
+                let displayMessage = `Generation Failed: ${error.message}`;
+                if (error.message.toLowerCase().includes("failed to fetch")) {
+                    displayMessage = "Generation Failed: Cannot connect to backend server. Please ensure the Python (app.py) service is running at http://127.0.0.1:5001 and is not blocked by a firewall.";
+                }
+                showMessage(displayMessage, "error");
             } finally {
                 loader.classList.add('hidden');
             }
         }
         
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        async function captureElementAsPng(element) {
+            if (!element) return null;
+            // Use a white background for captures to avoid transparency issues
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            return canvas.toDataURL("image/png");
+        }
+
         function captureAllImagesForPPT() {
             return new Promise(async (resolve, reject) => {
-                if (!mambaState?.analysisResults?.data || !cobraState?.analysisResults?.tableData) {
-                    return reject(new Error("Capture Error: Analysis data is missing. Please run both analyses."));
-                }
+                const hasCobraData = cobraState?.analysisResults?.tableData?.length > 0;
+                const hasPowerData = cobraState?.powerTableResults?.data?.length > 0;
 
+                if (!hasCobraData || !hasPowerData) {
+                    return reject(new Error("Capture Error: Analysis data is missing. Please run analysis first."));
+                }
+        
                 const captureStage = document.createElement('div');
                 captureStage.id = 'capture-stage';
                 captureStage.style.position = 'fixed';
                 captureStage.style.top = '0';
                 captureStage.style.left = '0';
-                captureStage.style.width = '100vw';
+                captureStage.style.width = '1200px';
                 captureStage.style.height = '100vh';
-                captureStage.style.zIndex = '9999';
+                captureStage.style.zIndex = '-9999';
+                captureStage.style.opacity = '0';
                 captureStage.style.backgroundColor = 'white';
                 captureStage.style.display = 'flex';
                 captureStage.style.flexDirection = 'column';
@@ -1869,10 +1885,10 @@
                 document.body.appendChild(captureStage);
 
                 try {
-                    const mambaContainer = document.createElement('div');
-                    mambaContainer.style.marginBottom = '40px';
-                    captureStage.appendChild(mambaContainer);
-                    
+                    const powerTableContainer = document.createElement('div');
+                    powerTableContainer.style.marginBottom = '40px';
+                    captureStage.appendChild(powerTableContainer);
+
                     const cobraTableContainer = document.createElement('div');
                     cobraTableContainer.style.marginBottom = '40px';
                     captureStage.appendChild(cobraTableContainer);
@@ -1882,24 +1898,20 @@
                     cobraChartContainer.style.height = '450px';
                     captureStage.appendChild(cobraChartContainer);
 
-                    renderMambaPowerTable(mambaState.analysisResults.headers, mambaState.analysisResults.data, mambaContainer);
+                    // Render all three components into the off-screen capture stage
+                    renderPowerTableForReport(cobraState.powerTableResults.headers, cobraState.powerTableResults.data, powerTableContainer);
                     renderCobraTable(cobraState.analysisResults.tableData, cobraTableContainer);
                     const tempChart = renderCobraChart(cobraState.analysisResults.chartData, cobraState.analysisResults.selectedSeries, cobraChartContainer);
-
-                    await new Promise(res => setTimeout(() => requestAnimationFrame(res), 300));
-
-                    const [mambaCanvas, cobraTableCanvas] = await Promise.all([
-                        html2canvas(mambaContainer.querySelector('.overflow-x-auto'), { scale: 2, useCORS: true }),
-                        html2canvas(cobraTableContainer.querySelector('.overflow-x-auto'), { scale: 2, useCORS: true })
-                    ]);
                     
-                    const mambaTableDataUrl = mambaCanvas.toDataURL("image/png");
-                    const cobraTableDataUrl = cobraTableCanvas.toDataURL("image/png");
+                    await new Promise(res => setTimeout(() => requestAnimationFrame(res), 500)); 
+
+                    const powerTableDataUrl = await captureElementAsPng(powerTableContainer.querySelector('.overflow-x-auto table'));
+                    const cobraTableDataUrl = await captureElementAsPng(cobraTableContainer.querySelector('.overflow-x-auto table'));
                     const cobraChartDataUrl = tempChart.toBase64Image('image/png', 1.0);
-
-                    if(tempChart) tempChart.destroy();
                     
-                    resolve({ mambaTableDataUrl, cobraTableDataUrl, cobraChartDataUrl });
+                    if(tempChart) tempChart.destroy();
+
+                    resolve({ powerTableDataUrl, cobraTableDataUrl, cobraChartDataUrl });
 
                 } catch (err) {
                     console.error("html2canvas capture failed:", err);
