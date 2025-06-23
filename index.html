@@ -1844,7 +1844,7 @@
                 console.log("Payload sent to backend:", JSON.stringify(Object.keys(payload)));
                 
                 loaderText.textContent = "Sending data to backend for processing... (3/3)";
-                const response = await fetch('http://10.10.66.81:5001/generate_ppt', {
+                const response = await fetch('http://10.10.66.81/generate_ppt', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
